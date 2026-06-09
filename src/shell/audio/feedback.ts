@@ -1,9 +1,8 @@
-// PROTOTYPE audio feedback (web only). Uses the Web Speech API for spoken names and WebAudio
-// oscillators for chimes, so the prototype is audible with NO bundled assets.
-//
-// PRODUCTION (M3): replace this with pre-rendered ElevenLabs voice clips + SFX played through the
-// native-audio AudioService (fully offline / zero-network — the spec forbids runtime TTS, and iOS
-// WKWebView WebAudio is unreliable). This module's call sites (speak / chime / buzz) stay the same.
+// PROTOTYPE audio feedback (web). Spoken names play PRE-RENDERED clips bundled under
+// public/assets/audio/vo/<word>.m4a (generated with macOS `say` for now); WebAudio oscillators
+// provide the chime / soft-tone SFX. This is the production-shaped approach — clips are bundled
+// and offline (no runtime TTS, which the spec forbids and which is unreliable across platforms).
+// M3 swaps the say-generated clips for the warm ElevenLabs narrator at the same paths.
 
 type WindowWithWebkitAudio = Window & { webkitAudioContext?: typeof AudioContext };
 
@@ -19,17 +18,33 @@ function audio(): AudioContext | undefined {
   return ctx;
 }
 
-/** Speak a short word/phrase in a friendly voice. */
+const voCache = new Map<string, HTMLAudioElement>();
+let currentVo: HTMLAudioElement | undefined;
+
+function slug(text: string): string {
+  return text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** Play the pre-rendered clip for a word/phrase (e.g. a colour or item name). */
 export function speak(text: string): void {
-  if (!text || !('speechSynthesis' in window)) return;
+  const key = slug(text);
+  if (!key) return;
   try {
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.95;
-    u.pitch = 1.2;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    let clip = voCache.get(key);
+    if (!clip) {
+      clip = new Audio(`assets/audio/vo/${key}.m4a`);
+      clip.preload = 'auto';
+      voCache.set(key, clip);
+    }
+    if (currentVo && currentVo !== clip) {
+      currentVo.pause();
+      currentVo.currentTime = 0;
+    }
+    clip.currentTime = 0;
+    void clip.play();
+    currentVo = clip;
   } catch {
-    // Speech synthesis unavailable — silently skip.
+    // Clip missing or playback blocked — silently skip.
   }
 }
 
