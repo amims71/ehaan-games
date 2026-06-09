@@ -5,31 +5,14 @@ import {
   type DraggableMeta,
   type DropTarget,
 } from '@/shell/input/dropValidation';
-import { drawBasket } from '@/shell/ui/theme';
+import { drawBasket, COLORS, darken, type NamedColor } from '@/shell/ui/theme';
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { fitGrid, rowX } from '@/shell/ui/layout';
 
-// Color-sort game. Each round randomly picks a few colours (from a vivid, mutually-distinguishable
-// pool) and a DISTINCT redundant emoji cue per colour, so the board varies every round but stays
-// colourblind-accessible: within a round a colour's bin and its items share the same cue. No
-// levels/scoring — finishing the set triggers an appreciation reward, then the board reshuffles.
-
-interface ColorDef {
-  id: string;
-  color: number; // filled card colour
-  tint: number; // soft basket fill
-}
-
-// Rendered as filled cards with a white border + drop shadow, so they read clearly on the cream bg.
-const COLOR_POOL: ColorDef[] = [
-  { id: 'blue', color: 0x0072b2, tint: 0xd5e8f4 },
-  { id: 'green', color: 0x009e73, tint: 0xd2efe6 },
-  { id: 'red', color: 0xd55e00, tint: 0xf7ddca },
-  { id: 'purple', color: 0x9b4dca, tint: 0xeaddf5 },
-  { id: 'pink', color: 0xe75a9c, tint: 0xfadcec },
-  { id: 'teal', color: 0x00a3a3, tint: 0xd2efef },
-];
+// Color-sort game. Each round randomly picks 3 of the 11 named colours from the shared palette.
+// Items show the vivid colour with a darkened border (so white/yellow remain visible on cream bg).
+// Baskets use the tint fill with a darkened border for the same reason.
 
 const ROUND_COLORS = 3; // colours shown per round
 const ITEMS_PER_CATEGORY = 2; // items of each colour per round
@@ -67,8 +50,8 @@ export class ColorSortScene extends BaseGameScene {
 
     this.addTitle('Match the colors!');
 
-    // Random colours for THIS round. No icons — pure colour matching, so the child sorts by colour.
-    const cats = this.shuffle([...COLOR_POOL]).slice(0, ROUND_COLORS);
+    // Pick 3 of the 11 named colours for this round.
+    const cats: NamedColor[] = this.shuffle([...COLORS]).slice(0, ROUND_COLORS);
 
     // Bins: a centred row across the bottom, sized to the viewport.
     const n = cats.length;
@@ -80,7 +63,7 @@ export class ColorSortScene extends BaseGameScene {
     cats.forEach((cat, i) => this.drawBin(xs[i], binY, binW, binH, cat));
 
     // Items: a grid filling the area between the title and the bins (adapts to orientation).
-    const deck: ColorDef[] = [];
+    const deck: NamedColor[] = [];
     cats.forEach((c) => {
       for (let k = 0; k < ITEMS_PER_CATEGORY; k++) deck.push(c);
     });
@@ -93,8 +76,9 @@ export class ColorSortScene extends BaseGameScene {
     );
   }
 
-  private drawBin(x: number, y: number, w: number, h: number, cat: ColorDef): void {
-    drawBasket(this, x, y, w, h, cat.tint, cat.color, '');
+  private drawBin(x: number, y: number, w: number, h: number, cat: NamedColor): void {
+    // Use darken() stroke so light colours (white/yellow) remain visible on the cream background.
+    drawBasket(this, x, y, w, h, cat.tint, darken(cat.color), '');
     const zone = this.add.zone(x, y, w, h).setRectangleDropZone(w, h);
     this.bins.push({
       zone,
@@ -105,7 +89,7 @@ export class ColorSortScene extends BaseGameScene {
     });
   }
 
-  private makeItem(x: number, y: number, size: number, cat: ColorDef, id: string): void {
+  private makeItem(x: number, y: number, size: number, cat: NamedColor, id: string): void {
     const r = 24;
     const c = this.add.container(x, y);
 
@@ -116,7 +100,8 @@ export class ColorSortScene extends BaseGameScene {
     const card = this.add.graphics();
     card.fillStyle(cat.color, 1);
     card.fillRoundedRect(-size / 2, -size / 2, size, size, r);
-    card.lineStyle(5, 0xffffff, 0.7);
+    // Darkened border so white/yellow cards remain visible on the cream background.
+    card.lineStyle(5, darken(cat.color), 0.9);
     card.strokeRoundedRect(-size / 2, -size / 2, size, size, r);
 
     c.add([shadow, card]);

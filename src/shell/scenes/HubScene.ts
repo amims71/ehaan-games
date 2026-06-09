@@ -19,6 +19,8 @@ export class HubScene extends Phaser.Scene {
   private dragStartPointerY = 0;
   private dragStartScroll = 0;
   private dragMoved = 0;
+  private rowStep = 0;
+  private wheelTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super('Hub');
@@ -77,6 +79,7 @@ export class HubScene extends Phaser.Scene {
       this.list.add(this.makeCard(x, y, tileW, tileH, game.icon, game.title, game.sceneKey));
     });
 
+    this.rowStep = tileH + gap;
     const contentH = rows * tileH + (rows - 1) * gap;
     const viewportH = H - this.listTop - H * 0.04;
     this.maxScroll = Math.max(0, contentH - viewportH);
@@ -105,11 +108,35 @@ export class HubScene extends Phaser.Scene {
     });
     this.input.on('pointerup', () => {
       this.dragActive = false;
+      if (this.dragMoved > 4) this.snapToRow();
     });
     this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       if (this.maxScroll <= 0) return;
       this.scrollY = Phaser.Math.Clamp(this.scrollY + dy * 0.5, 0, this.maxScroll);
       this.list.y = this.listTop - this.scrollY;
+      this.wheelTimer?.remove();
+      this.wheelTimer = this.time.delayedCall(160, () => this.snapToRow());
+    });
+  }
+
+  // Snap the scroll to the nearest whole row so the grid never rests on a half-cut row at the top.
+  private snapToRow(): void {
+    if (this.maxScroll <= 0 || this.rowStep <= 0) return;
+    const target = Phaser.Math.Clamp(
+      Math.round(this.scrollY / this.rowStep) * this.rowStep,
+      0,
+      this.maxScroll,
+    );
+    const proxy = { v: this.scrollY };
+    this.tweens.add({
+      targets: proxy,
+      v: target,
+      duration: 180,
+      ease: 'Quad.out',
+      onUpdate: () => {
+        this.scrollY = proxy.v;
+        this.list.y = this.listTop - proxy.v;
+      },
     });
   }
 

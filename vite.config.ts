@@ -13,7 +13,22 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Use the static manifest in public/; do not inject a generated one.
       manifest: false,
-      workbox: { globPatterns: ['**/*.{js,css,html,png,json,m4a,ogg}'] },
+      workbox: {
+        // Precache only the app shell — NOT the many audio clips (keeps first load light).
+        globPatterns: ['**/*.{js,css,html,png,json}'],
+        // Audio is fetched on demand the first time a clip plays, then cached at runtime.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }: { url: URL }) => url.pathname.endsWith('.m4a'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'audio-clips',
+              expiration: { maxEntries: 250, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
     }),
   ],
 });

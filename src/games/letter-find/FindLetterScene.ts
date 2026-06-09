@@ -1,7 +1,7 @@
-import { FindScene } from '@/shell/game/FindScene';
+import { LetterFindScene } from '@/shell/game/FindScene';
 
 // Visual find-the-letter game: shows the target character; player taps the matching card.
-export class FindLetterScene extends FindScene {
+export class FindLetterScene extends LetterFindScene {
   constructor() {
     super('FindLetter', 'visual');
   }

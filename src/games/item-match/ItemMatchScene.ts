@@ -28,6 +28,7 @@ export class ItemMatchScene extends MatchScene {
     parent: Phaser.GameObjects.Container,
     size: number,
     token: MatchToken,
+    _cardIndex: number,
   ): void {
     const icon = this.add
       .text(0, 0, token.key, { fontSize: `${Math.round(size * 0.52)}px` })

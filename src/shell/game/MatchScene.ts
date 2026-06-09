@@ -24,11 +24,12 @@ export abstract class MatchScene extends BaseGameScene {
   /** Return the distinct tokens for one round (4–5). */
   protected abstract pickRound(): MatchToken[];
 
-  /** Draw the card face (emoji, letter, number, etc.) onto parent. */
+  /** Draw the card face onto parent. cardIndex is 0 for the first card in the pair, 1 for the second. */
   protected abstract drawFace(
     parent: Phaser.GameObjects.Container,
     size: number,
     token: MatchToken,
+    cardIndex: number,
   ): void;
 
   /** The word/phrase to speak() when a pair is matched. */
@@ -60,17 +61,17 @@ export abstract class MatchScene extends BaseGameScene {
     this.addTitle(this.roundTitle());
 
     const tokens = this.pickRound();
-    const deck: Array<{ pairId: string; token: MatchToken; id: string }> = [];
+    const deck: Array<{ pairId: string; token: MatchToken; id: string; cardIndex: number }> = [];
     tokens.forEach((token, p) => {
       const pairId = `p${p}`;
-      deck.push({ pairId, token, id: `${pairId}-a` });
-      deck.push({ pairId, token, id: `${pairId}-b` });
+      deck.push({ pairId, token, id: `${pairId}-a`, cardIndex: 0 });
+      deck.push({ pairId, token, id: `${pairId}-b`, cardIndex: 1 });
     });
     const shuffled = this.shuffle(deck);
 
     const grid = fitGrid(shuffled.length, W * 0.05, H * 0.17, W * 0.9, H * 0.76, 0.2, 150);
     shuffled.forEach((entry, i) =>
-      this.makeCard(grid.cells[i].x, grid.cells[i].y, grid.size, entry.token, entry.id, entry.pairId),
+      this.makeCard(grid.cells[i].x, grid.cells[i].y, grid.size, entry.token, entry.id, entry.pairId, entry.cardIndex),
     );
   }
 
@@ -83,6 +84,7 @@ export abstract class MatchScene extends BaseGameScene {
     token: MatchToken,
     id: string,
     pairId: string,
+    cardIndex: number,
   ): void {
     const r = 24;
     const c = this.add.container(x, y);
@@ -100,7 +102,7 @@ export abstract class MatchScene extends BaseGameScene {
     c.add([shadow, bg]);
 
     // Let subclass paint the face on top.
-    this.drawFace(c, size, token);
+    this.drawFace(c, size, token, cardIndex);
 
     c.setSize(size, size);
     c.setInteractive({ useHandCursor: true });

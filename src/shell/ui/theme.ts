@@ -19,6 +19,35 @@ export const PALETTE = {
 export const TEXT_DARK = '#6b4f3a';
 export const ACCENT    = '#e8590c';
 
+// Named, child-nameable colour palette for the colour games. Light colours (white/yellow) are
+// rendered with a darker outline in-game so they read on the cream background.
+export interface NamedColor {
+  id: string;
+  color: number;
+  tint: number;
+}
+export const COLORS: NamedColor[] = [
+  { id: 'red',    color: 0xe23b3b, tint: 0xf8d7d7 },
+  { id: 'orange', color: 0xf08000, tint: 0xfce3c7 },
+  { id: 'yellow', color: 0xf4c20d, tint: 0xfcf3cf },
+  { id: 'green',  color: 0x2ecc71, tint: 0xd4f4e2 },
+  { id: 'blue',   color: 0x2e86de, tint: 0xd2e6fa },
+  { id: 'purple', color: 0x8e44ad, tint: 0xe8d7f0 },
+  { id: 'pink',   color: 0xff6fb5, tint: 0xffe0f0 },
+  { id: 'brown',  color: 0x8d6e63, tint: 0xe6ddd8 },
+  { id: 'black',  color: 0x2c2c2c, tint: 0xd9d9d9 },
+  { id: 'white',  color: 0xffffff, tint: 0xeeeeee },
+  { id: 'gray',   color: 0x95a5a6, tint: 0xe4e9ea },
+];
+
+/** Darken a colour by factor `f` (0..1) — used for outlines so light cards stay visible. */
+export function darken(color: number, f = 0.6): number {
+  const r = Math.round(((color >> 16) & 0xff) * f);
+  const g = Math.round(((color >> 8) & 0xff) * f);
+  const b = Math.round((color & 0xff) * f);
+  return (r << 16) | (g << 8) | b;
+}
+
 /**
  * Draw a rounded card (shadow + filled + white inner stroke) and return a Container.
  * The Container is positioned at (x, y) and sized to (size × size).
