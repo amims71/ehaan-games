@@ -48,6 +48,19 @@ export function speak(text: string): void {
   }
 }
 
+/** Like speak(), but waits for the currently-playing clip to finish (plus a short gap) first. */
+export function speakAfterCurrent(text: string): void {
+  const key = slug(text);
+  if (!key) return;
+  const cur = currentVo;
+  if (cur && !cur.paused && !cur.ended && Number.isFinite(cur.duration)) {
+    const remainingMs = Math.max(0, cur.duration - cur.currentTime) * 1000 + 140;
+    window.setTimeout(() => speak(text), remainingMs);
+  } else {
+    speak(text);
+  }
+}
+
 function tone(freq: number, startOffset: number, dur: number, gain: number): void {
   const ac = audio();
   if (!ac) return;
