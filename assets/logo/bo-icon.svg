@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e3f3ec"/><stop offset="1" stop-color="#c9ead9"/>
+    </linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7ab4d"/><stop offset="1" stop-color="#ef8f2e"/>
+    </linearGradient>
+  </defs>
+  <!-- full-bleed background (the OS applies its own corner mask) -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
+  <!-- Bo the bear, scaled + centred to fill the icon -->
+  <g transform="translate(256,256) scale(1.18) translate(-256,-268)">
+    <circle cx="170" cy="158" r="50" fill="url(#fur)" stroke="#d97a1f" stroke-width="9"/>
+    <circle cx="342" cy="158" r="50" fill="url(#fur)" stroke="#d97a1f" stroke-width="9"/>
+    <circle cx="170" cy="158" r="24" fill="#ffdcb4"/>
+    <circle cx="342" cy="158" r="24" fill="#ffdcb4"/>
+    <circle cx="256" cy="278" r="148" fill="url(#fur)" stroke="#d97a1f" stroke-width="11"/>
+    <ellipse cx="256" cy="322" rx="78" ry="60" fill="#fff0dd"/>
+    <circle cx="210" cy="256" r="18" fill="#4a2f17"/>
+    <circle cx="302" cy="256" r="18" fill="#4a2f17"/>
+    <ellipse cx="256" cy="300" rx="20" ry="14" fill="#4a2f17"/>
+    <path d="M228 326 Q256 356 284 326" stroke="#4a2f17" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <circle cx="180" cy="312" r="16" fill="#ff8f6b" opacity="0.55"/>
+    <circle cx="332" cy="312" r="16" fill="#ff8f6b" opacity="0.55"/>
+  </g>
+</svg>
