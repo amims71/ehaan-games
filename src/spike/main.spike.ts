@@ -28,8 +28,13 @@ game.events.once(Phaser.Core.Events.READY, async () => {
   const audio = new AudioService({ voiceBackend, ambientBackend: webBackend });
 
   // Preload only the native (critical) voice cue through the native backend;
-  // the music cue is loaded by the scene's Phaser loader.
-  await audio.registerCues(native ? cues.filter((c) => c.critical) : []);
+  // the music cue is loaded by the scene's Phaser loader. A preload failure must NOT
+  // abort init, or the tap-to-unlock listener below would never attach (blank screen).
+  try {
+    await audio.registerCues(native ? cues.filter((c) => c.critical) : []);
+  } catch (err) {
+    console.error('[spike] native audio preload failed; continuing (voice may be silent):', err);
+  }
 
   const lifecycle = new AppLifecycle(audio);
   lifecycle.start();

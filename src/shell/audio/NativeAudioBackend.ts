@@ -1,7 +1,10 @@
 // Implements the AudioBackend contract via @capacitor-community/native-audio.
 // Used for CRITICAL voice prompts on device. NOT unit-tested (device-verified).
-// CANONICAL assetPath convention (LAW, identical in M1): `${cue.src}.m4a` with NO public/ prefix,
-// because AudioCue.src already carries the "assets/audio/..." path (Shared Contracts §2.3).
+// CANONICAL assetPath convention (LAW, identical in M1): `public/${cue.src}.m4a`.
+// AudioCue.src carries the web path "assets/audio/..."; the @capacitor-community/native-audio
+// Android plugin (v7) opens assetPath via AssetManager relative to the assets root, where
+// Capacitor places web assets under "public/". The `public/` prefix is REQUIRED — verified
+// on-device in Phase 0 (see qa/device-matrix.md). This corrects the earlier no-prefix decision.
 import { NativeAudio } from '@capacitor-community/native-audio';
 import type { AudioBackend } from './AudioService';
 import type { AudioCue, AudioCueId } from '@/types';
@@ -10,7 +13,7 @@ export class NativeAudioBackend implements AudioBackend {
   async preload(cue: AudioCue): Promise<void> {
     await NativeAudio.preload({
       assetId: cue.id,
-      assetPath: `${cue.src}.m4a`,
+      assetPath: `public/${cue.src}.m4a`,
       audioChannelNum: 1,
       isUrl: false,
     });
