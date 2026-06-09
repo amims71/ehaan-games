@@ -41,6 +41,13 @@ const SOUNDS: Sfx[] = [
 ];
 
 async function main(): Promise<void> {
+  // Load a local .env if present (dev convenience). The .env is gitignored — never committed.
+  try {
+    (process as NodeJS.Process & { loadEnvFile?: (p?: string) => void }).loadEnvFile?.('.env');
+  } catch {
+    // No .env file — fall back to the real environment.
+  }
+
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) {
     console.error('ELEVENLABS_API_KEY is not set. Run:  export ELEVENLABS_API_KEY=...');
