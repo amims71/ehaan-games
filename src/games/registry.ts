@@ -24,4 +24,5 @@ export const GAMES: GameEntry[] = [
   { id: 'counting',      sceneKey: 'Counting',    title: 'Counting',     icon: '🔢' },
   { id: 'patterns',      sceneKey: 'Patterns',    title: 'Patterns',     icon: '🔁' },
   { id: 'first-letter',  sceneKey: 'FirstLetter', title: 'First Letter', icon: '🔤' },
+  { id: 'jigsaw',        sceneKey: 'SimpleJigsaw', title: 'Jigsaw',      icon: '🖼️' },
 ];
