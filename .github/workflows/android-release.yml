@@ -1,0 +1,70 @@
+name: Android Release
+
+# Builds a SIGNED Android APK + AAB on every version tag (vX.Y.Z) and attaches them to the
+# GitHub Release for that tag. Signing material comes from repository secrets:
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web bundle
+        run: pnpm build
+
+      - name: Sync Capacitor (Android)
+        run: npx cap sync android
+
+      - name: Decode signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Build signed APK + AAB
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleRelease bundleRelease
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk "out/ehaan-games-${GITHUB_REF_NAME}-android.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "out/ehaan-games-${GITHUB_REF_NAME}-android.aab"
+          ls -lh out
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ehaan Games ${{ github.ref_name }}
+          files: out/*
+          fail_on_unmatched_files: true

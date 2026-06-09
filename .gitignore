@@ -12,3 +12,9 @@ android/app/build/
 android/build/
 android/app/src/main/assets/public/
 .idea/
+
+# Signing keys — never commit these (kept out of the repo; CI uses GitHub secrets)
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties
