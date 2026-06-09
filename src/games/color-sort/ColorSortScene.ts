@@ -31,18 +31,8 @@ const COLOR_POOL: ColorDef[] = [
   { id: 'teal', color: 0x00a3a3, tint: 0xd2efef },
 ];
 
-// Distinct redundant cues; a fresh, non-repeating one is assigned to each colour per round.
-const ICON_POOL: string[] = [
-  '🐳', '🐢', '🦊', '🐸', '🐙', '🦄', '🐧', '🐝', '🦋', '🐬',
-  '🦁', '🐯', '🐰', '🐼', '🦉', '🐠', '🦖', '🐞', '🦒', '🐨',
-];
-
 const ROUND_COLORS = 3; // colours shown per round
 const ITEMS_PER_CATEGORY = 2; // items of each colour per round
-
-interface RoundCat extends ColorDef {
-  icon: string;
-}
 
 interface Item {
   container: Phaser.GameObjects.Container;
@@ -77,10 +67,8 @@ export class ColorSortScene extends BaseGameScene {
 
     this.addTitle('Match the colors!');
 
-    // Random colours + distinct random cues for THIS round.
-    const colors = this.shuffle([...COLOR_POOL]).slice(0, ROUND_COLORS);
-    const icons = this.shuffle([...ICON_POOL]).slice(0, ROUND_COLORS);
-    const cats: RoundCat[] = colors.map((c, i) => ({ ...c, icon: icons[i] }));
+    // Random colours for THIS round. No icons — pure colour matching, so the child sorts by colour.
+    const cats = this.shuffle([...COLOR_POOL]).slice(0, ROUND_COLORS);
 
     // Bins: a centred row across the bottom, sized to the viewport.
     const n = cats.length;
@@ -92,7 +80,7 @@ export class ColorSortScene extends BaseGameScene {
     cats.forEach((cat, i) => this.drawBin(xs[i], binY, binW, binH, cat));
 
     // Items: a grid filling the area between the title and the bins (adapts to orientation).
-    const deck: RoundCat[] = [];
+    const deck: ColorDef[] = [];
     cats.forEach((c) => {
       for (let k = 0; k < ITEMS_PER_CATEGORY; k++) deck.push(c);
     });
@@ -105,8 +93,8 @@ export class ColorSortScene extends BaseGameScene {
     );
   }
 
-  private drawBin(x: number, y: number, w: number, h: number, cat: RoundCat): void {
-    drawBasket(this, x, y, w, h, cat.tint, cat.color, cat.icon);
+  private drawBin(x: number, y: number, w: number, h: number, cat: ColorDef): void {
+    drawBasket(this, x, y, w, h, cat.tint, cat.color, '');
     const zone = this.add.zone(x, y, w, h).setRectangleDropZone(w, h);
     this.bins.push({
       zone,
@@ -117,7 +105,7 @@ export class ColorSortScene extends BaseGameScene {
     });
   }
 
-  private makeItem(x: number, y: number, size: number, cat: RoundCat, id: string): void {
+  private makeItem(x: number, y: number, size: number, cat: ColorDef, id: string): void {
     const r = 24;
     const c = this.add.container(x, y);
 
@@ -131,11 +119,7 @@ export class ColorSortScene extends BaseGameScene {
     card.lineStyle(5, 0xffffff, 0.7);
     card.strokeRoundedRect(-size / 2, -size / 2, size, size, r);
 
-    const icon = this.add
-      .text(0, 0, cat.icon, { fontSize: `${Math.round(size * 0.56)}px` })
-      .setOrigin(0.5);
-
-    c.add([shadow, card, icon]);
+    c.add([shadow, card]);
     c.setSize(size, size);
     c.setInteractive({ draggable: true, useHandCursor: true });
 

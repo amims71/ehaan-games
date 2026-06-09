@@ -6,7 +6,7 @@ export const FONT = 'Fredoka, "Baloo 2", "Trebuchet MS", system-ui, sans-serif';
 export const BG_HEX = '#fff7ed';
 export const BG_NUM = 0xfff7ed;
 
-// Colourblind-safe Okabe-Ito palette — every colour must carry a redundant emoji cue in-game.
+// Colourblind-safe Okabe-Ito palette.
 export const PALETTE = {
   blue:   { color: 0x0072b2, tint: 0xd5e8f4 },
   green:  { color: 0x009e73, tint: 0xd2efe6 },
@@ -75,12 +75,14 @@ export function drawBasket(
   bg.lineStyle(9, strokeColor, 1);
   bg.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
 
-  const label = scene.add
-    .text(0, 0, icon, { fontSize: `${Math.round(h * 0.46)}px` })
-    .setOrigin(0.5)
-    .setAlpha(0.32);
-
-  c.add([shadow, bg, label]);
+  c.add([shadow, bg]);
+  if (icon) {
+    const label = scene.add
+      .text(0, 0, icon, { fontSize: `${Math.round(h * 0.46)}px` })
+      .setOrigin(0.5)
+      .setAlpha(0.32);
+    c.add(label);
+  }
   c.setSize(w, h);
   return c;
 }
