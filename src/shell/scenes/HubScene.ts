@@ -21,6 +21,9 @@ export class HubScene extends Phaser.Scene {
   private dragMoved = 0;
   private rowStep = 0;
   private wheelTimer?: Phaser.Time.TimerEvent;
+  private vy = 0;              // scroll velocity (px/ms) tracked during a drag
+  private lastMoveT = 0;
+  private scrollTween?: Phaser.Tweens.Tween;
 
   constructor() {
     super('Hub');
@@ -97,45 +100,62 @@ export class HubScene extends Phaser.Scene {
         this.dragActive = false;
         return;
       }
+      this.scrollTween?.stop(); // grabbing mid-glide stops it (like catching a scrolling list)
       this.dragActive = true;
       this.dragStartPointerY = p.y;
       this.dragStartScroll = this.scrollY;
       this.dragMoved = 0;
+      this.vy = 0;
+      this.lastMoveT = this.time.now;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!this.dragActive || !p.isDown) return;
       const dy = p.y - this.dragStartPointerY;
       this.dragMoved = Math.max(this.dragMoved, Math.abs(dy));
-      this.scrollY = Phaser.Math.Clamp(this.dragStartScroll - dy, 0, this.maxScroll);
+      const next = Phaser.Math.Clamp(this.dragStartScroll - dy, 0, this.maxScroll);
+      // Track velocity (px/ms) between moves so a flick can carry momentum on release.
+      const dt = this.time.now - this.lastMoveT;
+      if (dt > 0) this.vy = Phaser.Math.Clamp((next - this.scrollY) / dt, -5, 5);
+      this.scrollY = next;
       this.list.y = this.listTop - this.scrollY;
+      this.lastMoveT = this.time.now;
     });
     this.input.on('pointerup', () => {
+      if (!this.dragActive) return;
       this.dragActive = false;
-      if (this.dragMoved > 4) this.snapToRow();
+      if (this.dragMoved <= 4) return; // a tap, not a scroll
+      // Project the flick's momentum, land on a whole row, and ease out — native-feeling deceleration.
+      const projected = this.scrollY + this.vy * 220;
+      const target = this.rowAlign(projected);
+      const duration = Phaser.Math.Clamp(220 + Math.abs(target - this.scrollY) * 0.7, 240, 700);
+      this.scrollTo(target, duration);
     });
     this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       if (this.maxScroll <= 0) return;
+      this.scrollTween?.stop();
       this.scrollY = Phaser.Math.Clamp(this.scrollY + dy * 0.5, 0, this.maxScroll);
       this.list.y = this.listTop - this.scrollY;
       this.wheelTimer?.remove();
-      this.wheelTimer = this.time.delayedCall(160, () => this.snapToRow());
+      this.wheelTimer = this.time.delayedCall(150, () => this.scrollTo(this.rowAlign(this.scrollY), 200));
     });
   }
 
-  // Snap the scroll to the nearest whole row so the grid never rests on a half-cut row at the top.
-  private snapToRow(): void {
-    if (this.maxScroll <= 0 || this.rowStep <= 0) return;
-    const target = Phaser.Math.Clamp(
-      Math.round(this.scrollY / this.rowStep) * this.rowStep,
-      0,
-      this.maxScroll,
-    );
+  /** Nearest whole-row scroll position (so the grid never rests on a half-cut row at the top). */
+  private rowAlign(v: number): number {
+    if (this.rowStep <= 0) return 0;
+    return Phaser.Math.Clamp(Math.round(v / this.rowStep) * this.rowStep, 0, this.maxScroll);
+  }
+
+  /** Eased scroll to a target position; replaces any in-flight glide. */
+  private scrollTo(target: number, duration: number): void {
+    if (this.maxScroll <= 0) return;
+    this.scrollTween?.stop();
     const proxy = { v: this.scrollY };
-    this.tweens.add({
+    this.scrollTween = this.tweens.add({
       targets: proxy,
       v: target,
-      duration: 180,
-      ease: 'Quad.out',
+      duration,
+      ease: 'Cubic.out',
       onUpdate: () => {
         this.scrollY = proxy.v;
         this.list.y = this.listTop - proxy.v;
