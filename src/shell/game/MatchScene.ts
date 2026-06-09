@@ -171,23 +171,22 @@ export abstract class MatchScene extends BaseGameScene {
       card.matched = true;
       card.container.disableInteractive();
       this.tweens.killTweensOf(card.container);
+      // Celebrate the match, then make the pair vanish so only unmatched cards remain on the board.
       this.tweens.add({
         targets: card.container,
-        scale: 1.18,
-        duration: 140,
+        scale: 1.2,
+        duration: 150,
         yoyo: true,
         ease: 'Back.out',
         onComplete: () => {
-          card.container.setScale(1);
-          card.container.setAlpha(0.55);
-          const badge = this.add
-            .text(0, 0, '✓', {
-              fontSize: `${Math.round(card.container.width * 0.38)}px`,
-              color: '#009e73',
-              fontStyle: '700',
-            })
-            .setOrigin(0.5);
-          card.container.add(badge);
+          this.tweens.add({
+            targets: card.container,
+            scale: 0,
+            alpha: 0,
+            duration: 240,
+            ease: 'Back.in',
+            onComplete: () => card.container.setVisible(false),
+          });
         },
       });
       if (!this.matched.includes(card.meta.id)) this.matched.push(card.meta.id);
@@ -196,7 +195,8 @@ export abstract class MatchScene extends BaseGameScene {
     this.locked = false;
 
     if (isSetComplete(this.matched, this.cards.map((c) => c.meta.id))) {
-      this.time.delayedCall(400, () =>
+      // Wait for the last pair to finish vanishing before the celebration.
+      this.time.delayedCall(700, () =>
         this.celebrate(['🎉', '⭐', '🐱', '✨', '🌞', '💛', '🧩']),
       );
     }
