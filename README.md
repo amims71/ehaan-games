@@ -67,7 +67,3 @@ npx cap run android     # or: npx cap run ios  (requires Xcode)
 ## License
 
 [MIT](LICENSE)
-
----
-
-*Prototype — not yet released.*
