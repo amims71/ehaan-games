@@ -85,7 +85,7 @@ Each module is a **thin abstraction** so an implementation swap — or a full pi
 
 ### 4.2 How a game is defined (data flow)
 
-A new game = **a thin Scene that extends `BaseGameScene` + a `levels.json`**. The Scene wires shell systems (drag-drop, audio, rewards) to the content; the JSON describes items, targets, layout, palette, and audio cues. No engine plumbing per game — that is what makes the catalog cheap to grow.
+A new game = **a thin Scene that extends `BaseGameScene` + a `content.json`**. The Scene wires shell systems (drag-drop, audio, rewards) to the content; the JSON describes items, targets, layout, palette, and audio cues. **There are no levels or scoring** — the config is a single content set per game, and completion triggers an appreciation reward. No engine plumbing per game — that is what makes the catalog cheap to grow.
 
 ### 4.3 Project structure
 
@@ -106,9 +106,9 @@ ehaan-games/                      (monorepo root; pnpm/npm workspace, Vite + TS 
 │  │  └─ ui/                      (buttons, dialogs, theme tokens)
 │  ├─ games/
 │  │  ├─ registry.ts              (declares games for HubScene)
-│  │  ├─ color-sort/  (ColorSortScene.ts + levels.json)
-│  │  ├─ item-sort/   (ItemSortScene.ts  + levels.json)
-│  │  └─ item-match/  (ItemMatchScene.ts + levels.json)
+│  │  ├─ color-sort/  (ColorSortScene.ts + content.json)
+│  │  ├─ item-sort/   (ItemSortScene.ts  + content.json)
+│  │  └─ item-match/  (ItemMatchScene.ts + content.json)
 │  └─ types/                      (LevelConfig, GameDef, AudioCue, SpriteKey)
 ├─ assets/                        (build INPUT, not shipped raw)
 │  ├─ style-guide.md              (the ONE reusable prompt block + locked look rules)
@@ -130,11 +130,13 @@ ehaan-games/                      (monorepo root; pnpm/npm workspace, Vite + TS 
 
 ## 5. The three v1 games
 
-| Game | Mechanic | Content config |
+| Game | Mechanic | Content config (no levels/scoring) |
 |---|---|---|
 | **Color sort** | Drag items into matching color bins | Items + colors with a **redundant shape/pattern/icon cue**; Okabe-Ito colorblind-safe palette |
 | **Item sort** | Drag items into category bins (fruit vs animal…) | Categories, items, target bins |
 | **Item match** | Tap/drag to pair matching items on a grid | Pairs, grid layout |
+
+Each game is open, continuous play: complete the set → an **appreciation reward** (celebratory pop + cheer) → reshuffle/continue. No levels, points, or difficulty progression.
 
 **Color-sort accessibility is a hard requirement, not polish:** every color category is paired with a redundant non-color cue (distinct shape outline + fill pattern + icon on both item and bin), uses a colorblind-safe palette, keeps ≥3:1 item/background contrast, and never places adjacent red/green or blue/purple bins. This serves colorblind children *and* the ~8% of fathers who are colorblind playing alongside them.
 
@@ -188,7 +190,7 @@ The strategy is **collect literally nothing**, which side-steps COPPA/GDPR-K ver
 
 ## 9. Build plan
 
-- **Phase 0 — De-risk (≈week 1, the gate).** Stand up Vite + Phaser 4.1.x + Capacitor 8.3.x; build one *throwaway* color-sort vertical slice (a few draggable sprites into a bin, one music loop, one voice prompt via native audio). Test on (a) a real older iPad through a call interruption + lock/unlock — voice must survive; and (b) a genuinely cheap (sub-$80) Android tablet — drag must feel responsive, battery acceptable. **Decision gate:** pass → proceed; fail on iOS audio or cheap-Android drag → pivot to React Native + Expo (Skia + Reanimated 4 + Gesture Handler / reanimated-dnd), same TS team, no language change.
+- **Phase 0 — De-risk (≈week 1, the gate).** Stand up Vite + Phaser 4.1.x + Capacitor 8.3.x; build one *throwaway* color-sort vertical slice (a few draggable sprites into a bin, one music loop, one voice prompt via native audio). Test on the team's **current** devices (no old/legacy hardware per §10): (a) a current iPad through a call interruption + lock/unlock — voice must survive (targets the WKWebView WebAudio defect, present on current iOS); and (b) a current Android device — drag must feel responsive, battery acceptable. (Note: not testing genuinely cheap hardware leaves residual low-end jank risk; mitigated by atlasing/WebGL/idle-throttling.) **Decision gate:** pass → proceed; fail on iOS audio or cheap-Android drag → pivot to React Native + Expo (Skia + Reanimated 4 + Gesture Handler / reanimated-dnd), same TS team, no language change.
 - **Phase 1 — Build the reusable shell.** Scenes (Boot, Hub, Settings, BaseGameScene) + thin-abstraction modules (AudioService, DragDropController, RewardFx, ProgressStore, AppLifecycle, ParentalGate); colorblind-safe theme tokens + big-tap-target UI kit.
 - **Phase 2 — Stand up the AI-asset pipeline.** Commit style guide + reference images; wire `tools/` scripts (generate → rembg → pack-atlas → compress-audio → provenance manifest); produce first batch + human QA.
 - **Phase 3 — Build the 3 games** as content + config on the shell; register all three in the Hub.
@@ -203,7 +205,9 @@ The strategy is **collect literally nothing**, which side-steps COPPA/GDPR-K ver
 - **Product name:** "Ehaan Games" — use for the app title and appId base.
 - **PWA priority:** later bonus. Launch targets iOS + Android; the PWA (same-build web version, installable from a URL) is published afterward.
 
-**Open (to resolve during planning):**
-- **Per-game level count for v1** — how many levels/difficulty steps per game at launch?
-- **Device test targets** — which specific older iPad model and which cheap Android tablet will be used for the Phase-0 gate?
+**Resolved (2026-06-09, round 2):**
+- **No levels / no scoring.** Each game is open, continuous play with **appreciation-only** rewards (celebratory pop/cheer). No levels, no difficulty unlocks, no points, no progress bars. A game's content config is simply its set of items/colors/categories/pairs and layout — there is no level progression. (This reinforces the no-manipulative-engagement stance in §7.)
+- **Device testing: current devices only — no old/legacy hardware.** The Phase-0 gate runs on the team's current iPad and current Android device. The iOS **audio-interruption + lock/unlock** test still applies (it targets a WKWebView WebAudio defect present on current iOS, not an old-device issue). **Tradeoff to accept:** skipping a genuinely cheap/old Android tablet reduces coverage of the low-end jank/battery risk (§8); we mitigate via atlasing/WebGL/idle-throttling by default and accept residual risk on the cheapest hardware in the wild.
+
+**Open:** none blocking — ready for implementation planning.
 ```
