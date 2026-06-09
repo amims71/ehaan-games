@@ -3,10 +3,11 @@ import { SortScene, type SortBin, type SortItem } from '@/shell/game/SortScene';
 import { FONT, PALETTE, glyphText } from '@/shell/ui/theme';
 
 // Sort game: drag items to the 'Big' or 'Small' basket based on the rendered emoji size.
-// Both bins show the same emojis — only the font size signals big vs small.
+// Each round shows a few icons AS PAIRS — the same icon once big and once small — so the child
+// compares the same item at two sizes and learns big vs small per item.
 
 const EMOJI_POOL = ['🐶', '🍎', '⭐', '🚗', '🐱', '🌸', '🦁', '🎈', '🍦', '🐸'];
-const TOTAL_ITEMS = 6;
+const PAIRS = 3; // distinct icons per round; each appears once big and once small (→ 6 items)
 
 type SizeCategory = 'big' | 'small';
 
@@ -35,27 +36,24 @@ export class SizeSortScene extends SortScene {
       },
     ];
 
-    // Pick random emojis; ensure at least one big and one small.
-    const emojis = this.shuffle([...EMOJI_POOL]).slice(0, TOTAL_ITEMS);
-    const sizes: SizeCategory[] = ['big', 'small'];
-    for (let i = 2; i < TOTAL_ITEMS; i++) {
-      sizes.push(Math.random() < 0.5 ? 'big' : 'small');
-    }
-    const shuffledSizes = this.shuffle(sizes);
-
-    const items: SortItem[] = emojis.map((emoji, i) => {
-      const cat = shuffledSizes[i];
-      return {
-        id: `${emoji}-${i}`,
-        categoryId: cat,
-        pronounce: cat,
-        drawInto: (c: Phaser.GameObjects.Container, size: number) => {
-          this.drawSizeItem(c, emoji, cat, size);
-        },
-      };
+    // Each chosen icon becomes a pair: one 'big' item and one 'small' item, so the same picture
+    // is shown at both sizes for direct comparison.
+    const emojis = this.shuffle([...EMOJI_POOL]).slice(0, PAIRS);
+    const items: SortItem[] = [];
+    emojis.forEach((emoji, i) => {
+      (['big', 'small'] as SizeCategory[]).forEach((cat) => {
+        items.push({
+          id: `${emoji}-${cat}-${i}`,
+          categoryId: cat,
+          pronounce: cat,
+          drawInto: (c: Phaser.GameObjects.Container, size: number) => {
+            this.drawSizeItem(c, emoji, cat, size);
+          },
+        });
+      });
     });
 
-    return { bins, items };
+    return { bins, items: this.shuffle(items) };
   }
 
   // ── drawing helpers ────────────────────────────────────────────────────────
