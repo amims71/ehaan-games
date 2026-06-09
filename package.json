@@ -16,7 +16,7 @@
     "assets:atlas": "tsx tools/pack-atlas.ts",
     "assets:audio": "tsx tools/compress-audio.ts",
     "assets:manifest": "tsx tools/asset-manifest.ts",
-    "lint": "eslint src tools tests --ext .ts"
+    "lint": "eslint src tools tests --ext .ts --no-error-on-unmatched-pattern"
   },
   "dependencies": {
     "phaser": "4.1.0",
