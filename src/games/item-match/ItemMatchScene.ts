@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { MatchScene, type MatchToken } from '@/shell/game/MatchScene';
 import { nameFor } from '@/shell/ui/emojiNames';
+import { glyphText } from '@/shell/ui/theme';
 
 // Find-the-pair matching game. All cards are face-up (appropriate for ages 2-5).
 // Tap one card to select it, tap another — if they share pairId they lock; else both wiggle.
@@ -30,9 +31,7 @@ export class ItemMatchScene extends MatchScene {
     token: MatchToken,
     _cardIndex: number,
   ): void {
-    const icon = this.add
-      .text(0, 0, token.key, { fontSize: `${Math.round(size * 0.52)}px` })
-      .setOrigin(0.5);
+    const icon = glyphText(this, 0, 0, token.key, Math.round(size * 0.52));
     parent.add(icon);
   }
 

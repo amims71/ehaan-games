@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { FindScene, type FindToken } from '@/shell/game/FindScene';
+import { glyphText } from '@/shell/ui/theme';
 
 // Audio game: hear an animal sound and tap the matching animal emoji.
 // promptKey returns the sound (e.g. 'moo'); pronounce returns the name (e.g. 'cow').
@@ -52,9 +53,7 @@ export class AnimalSoundScene extends FindScene {
   ): void {
     const animal = this.animalMap.get(token.key);
     const emoji  = animal?.emoji ?? '❓';
-    const label  = this.add
-      .text(0, 0, emoji, { fontSize: `${Math.round(size * 0.55)}px` })
-      .setOrigin(0.5);
+    const label  = glyphText(this, 0, 0, emoji, Math.round(size * 0.55));
     parent.add(label);
   }
 

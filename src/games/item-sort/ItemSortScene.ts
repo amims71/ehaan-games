@@ -5,7 +5,7 @@ import {
   type DraggableMeta,
   type DropTarget,
 } from '@/shell/input/dropValidation';
-import { FONT, PALETTE, drawBasket } from '@/shell/ui/theme';
+import { FONT, PALETTE, drawBasket, glyphText } from '@/shell/ui/theme';
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { nameFor } from '@/shell/ui/emojiNames';
@@ -144,9 +144,7 @@ export class ItemSortScene extends BaseGameScene {
     card.lineStyle(5, 0xffd6b0, 0.9);
     card.strokeRoundedRect(-size / 2, -size / 2, size, size, r);
 
-    const icon = this.add
-      .text(0, 0, emoji, { fontSize: `${Math.round(size * 0.56)}px` })
-      .setOrigin(0.5);
+    const icon = glyphText(this, 0, 0, emoji, Math.round(size * 0.56));
 
     c.add([shadow, card, icon]);
     c.setSize(size, size);

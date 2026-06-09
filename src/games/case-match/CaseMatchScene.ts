@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { MatchScene, type MatchToken } from '@/shell/game/MatchScene';
-import { FONT, TEXT_DARK } from '@/shell/ui/theme';
+import { FONT, TEXT_DARK, glyphText } from '@/shell/ui/theme';
 
 // Pair-matching game: match the uppercase letter to its lowercase partner.
 // cardIndex 0 → uppercase, cardIndex 1 → lowercase.
@@ -31,14 +31,11 @@ export class CaseMatchScene extends MatchScene {
   ): void {
     // cardIndex 0: uppercase (big letter); cardIndex 1: lowercase (small letter).
     const display = cardIndex === 0 ? token.key : token.key.toLowerCase();
-    const label = this.add
-      .text(0, 0, display, {
-        fontFamily: FONT,
-        fontStyle: '700',
-        color: TEXT_DARK,
-        fontSize: `${Math.round(size * 0.5)}px`,
-      })
-      .setOrigin(0.5);
+    const label = glyphText(this, 0, 0, display, Math.round(size * 0.5), {
+      fontFamily: FONT,
+      fontStyle: '700',
+      color: TEXT_DARK,
+    });
     parent.add(label);
   }
 

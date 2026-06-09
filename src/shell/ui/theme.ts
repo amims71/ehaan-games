@@ -29,7 +29,7 @@ export interface NamedColor {
 export const COLORS: NamedColor[] = [
   { id: 'red',    color: 0xe23b3b, tint: 0xf8d7d7 },
   { id: 'orange', color: 0xf08000, tint: 0xfce3c7 },
-  { id: 'yellow', color: 0xf4c20d, tint: 0xfcf3cf },
+  { id: 'yellow', color: 0xffe000, tint: 0xffec80 },
   { id: 'green',  color: 0x2ecc71, tint: 0xd4f4e2 },
   { id: 'blue',   color: 0x2e86de, tint: 0xd2e6fa },
   { id: 'purple', color: 0x8e44ad, tint: 0xe8d7f0 },
@@ -75,6 +75,24 @@ export function drawRoundedCard(
   c.add([shadow, card]);
   c.setSize(size, size);
   return c;
+}
+
+/**
+ * Create a centred text glyph (emoji / letter / number) with vertical padding so large glyphs
+ * are not clipped at the top by the text texture bounds. `extra` merges extra style fields.
+ */
+export function glyphText(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  char: string,
+  sizePx: number,
+  extra?: Partial<Phaser.Types.GameObjects.Text.TextStyle>,
+): Phaser.GameObjects.Text {
+  const pad = Math.round(sizePx * 0.22);
+  return scene.add
+    .text(x, y, char, { fontSize: `${sizePx}px`, padding: { top: pad, bottom: pad }, ...extra })
+    .setOrigin(0.5);
 }
 
 /**

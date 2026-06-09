@@ -56,7 +56,7 @@ export class ShapeSortScene extends SortScene {
       categoryId: shape,
       drawInto: (c: Phaser.GameObjects.Container, w: number, h: number) => {
         // Large pale shape silhouette with bold outline — the bin IS the shape, no square basket.
-        drawShape(this, c, shape, Math.min(w, h) * 1.7, pal.tint, { stroke: pal.stroke, width: 8 });
+        drawShape(this, c, shape, Math.min(w, h) * 1.0, pal.tint, { stroke: pal.stroke, width: 8 });
       },
     };
   }

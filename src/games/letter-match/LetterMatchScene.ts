@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { MatchScene, type MatchToken } from '@/shell/game/MatchScene';
-import { FONT, TEXT_DARK } from '@/shell/ui/theme';
+import { FONT, TEXT_DARK, glyphText } from '@/shell/ui/theme';
 
 // Pair-matching game for letters A–Z and digits 0–9. Each round randomly picks letters or numbers.
 
@@ -33,14 +33,11 @@ export class LetterMatchScene extends MatchScene {
     token: MatchToken,
     _cardIndex: number,
   ): void {
-    const label = this.add
-      .text(0, 0, token.key, {
-        fontFamily: FONT,
-        fontStyle: '700',
-        color: TEXT_DARK,
-        fontSize: `${Math.round(size * 0.5)}px`,
-      })
-      .setOrigin(0.5);
+    const label = glyphText(this, 0, 0, token.key, Math.round(size * 0.5), {
+      fontFamily: FONT,
+      fontStyle: '700',
+      color: TEXT_DARK,
+    });
     parent.add(label);
   }
 

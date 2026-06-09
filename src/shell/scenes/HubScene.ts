@@ -165,8 +165,13 @@ export class HubScene extends Phaser.Scene {
     bg.lineStyle(5, 0xfed7aa, 1);
     bg.strokeRoundedRect(-w / 2, -h / 2, w, h, r);
 
+    const fs = Math.round(Math.min(w, h) * 0.38);
     const iconText = this.add
-      .text(0, -h * 0.12, icon, { fontSize: `${Math.round(Math.min(w, h) * 0.38)}px` })
+      .text(0, -h * 0.12, icon, {
+        fontSize: `${fs}px`,
+        // Vertical padding so large emoji glyphs aren't clipped at the top by the text texture bounds.
+        padding: { top: Math.round(fs * 0.22), bottom: Math.round(fs * 0.22) },
+      })
       .setOrigin(0.5);
 
     const titleText = this.add

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { SortScene, type SortBin, type SortItem } from '@/shell/game/SortScene';
-import { FONT, PALETTE } from '@/shell/ui/theme';
+import { FONT, PALETTE, glyphText } from '@/shell/ui/theme';
 
 // Sort game: drag items to the 'Big' or 'Small' basket based on the rendered emoji size.
 // Both bins show the same emojis — only the font size signals big vs small.
@@ -115,9 +115,7 @@ export class SizeSortScene extends SortScene {
 
     // Large emoji for 'big', small emoji for 'small'.
     const fontSize = cat === 'big' ? Math.round(size * 0.78) : Math.round(size * 0.34);
-    const icon = this.add
-      .text(0, 0, emoji, { fontSize: `${fontSize}px` })
-      .setOrigin(0.5);
+    const icon = glyphText(this, 0, 0, emoji, fontSize);
     c.add(icon);
   }
 }

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
-import { FONT, TEXT_DARK, ACCENT } from '@/shell/ui/theme';
+import { FONT, TEXT_DARK, ACCENT, glyphText } from '@/shell/ui/theme';
 import { fitGrid } from '@/shell/ui/layout';
 
 // Abstract "find the matching token" game. Shows ~8 candidates; player taps the one that
@@ -244,14 +244,11 @@ export abstract class LetterFindScene extends FindScene {
     size: number,
     token: FindToken,
   ): void {
-    const label = this.add
-      .text(0, 0, token.key, {
-        fontFamily: FONT,
-        fontStyle: '700',
-        color: TEXT_DARK,
-        fontSize: `${Math.round(size * 0.5)}px`,
-      })
-      .setOrigin(0.5);
+    const label = glyphText(this, 0, 0, token.key, Math.round(size * 0.5), {
+      fontFamily: FONT,
+      fontStyle: '700',
+      color: TEXT_DARK,
+    });
     parent.add(label);
   }
 
