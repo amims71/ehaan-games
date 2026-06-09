@@ -49,6 +49,11 @@ describe('reduceResume', () => {
     const { next } = reduceResume(suspended, 'app-resume');
     expect(next.resume).toBe('recovering');
   });
+
+  it('transitions uninitialized --manual(suspend)--> suspended', () => {
+    const { next } = reduceResume(initialAudioState(), 'manual');
+    expect(next.resume).toBe('suspended');
+  });
 });
 
 describe('resolveRecovering', () => {
@@ -60,6 +65,20 @@ describe('resolveRecovering', () => {
     const { next, flush } = resolveRecovering(s);
     expect(next.resume).toBe('running');
     expect(next.pending).toEqual([]);
+    expect(flush.map((c) => c.id)).toEqual([cueId('v1'), cueId('v2')]);
+  });
+});
+
+describe('pending survives suspend -> resume', () => {
+  it('keeps queued critical cues across suspended --app-resume--> recovering, then flushes them', () => {
+    let s: import('./audioQueue').AudioQueueState = { resume: 'suspended' as const, pending: [] };
+    s = enqueueCue(s, voice('v1')).next;
+    s = enqueueCue(s, voice('v2')).next;
+    s = reduceResume(s, 'app-resume').next; // suspended -> recovering, pending preserved
+    expect(s.resume).toBe('recovering');
+    expect(s.pending.map((c) => c.id)).toEqual([cueId('v1'), cueId('v2')]);
+    const { next, flush } = resolveRecovering(s);
+    expect(next.resume).toBe('running');
     expect(flush.map((c) => c.id)).toEqual([cueId('v1'), cueId('v2')]);
   });
 });

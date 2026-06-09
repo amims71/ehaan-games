@@ -82,7 +82,7 @@ export class AudioService {
   private async reacquire(): Promise<void> {
     const voiceOk = await this.options.voiceBackend.resume();
     const ambientOk = await this.options.ambientBackend.resume();
-    if (voiceOk && ambientOk) {
+    if (voiceOk && ambientOk && this.state.resume === 'recovering') {
       const { next, flush } = resolveRecovering(this.state);
       this.state = next;
       for (const c of flush) {

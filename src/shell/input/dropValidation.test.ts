@@ -20,6 +20,12 @@ describe('isValidDrop', () => {
     const target: DropTarget = { id: 'slot-1', acceptsCategoryId: null };
     expect(isValidDrop(item, target)).toBe(false);
   });
+
+  it('rejects an item with no categoryId (match-game item on a sort bin)', () => {
+    const item: DraggableMeta = { id: 'i1' };
+    const target: DropTarget = { id: 'bin-blue', acceptsCategoryId: 'blue' };
+    expect(isValidDrop(item, target)).toBe(false);
+  });
 });
 
 describe('isMatch', () => {
@@ -37,6 +43,12 @@ describe('isMatch', () => {
   it('does not match items with different pairIds', () => {
     const a: DraggableMeta = { id: 'a', pairId: 'sun' };
     const b: DraggableMeta = { id: 'b', pairId: 'moon' };
+    expect(isMatch(a, b)).toBe(false);
+  });
+
+  it('does not match two items that both lack a pairId', () => {
+    const a: DraggableMeta = { id: 'a' };
+    const b: DraggableMeta = { id: 'b' };
     expect(isMatch(a, b)).toBe(false);
   });
 });
