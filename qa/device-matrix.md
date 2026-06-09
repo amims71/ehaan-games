@@ -92,10 +92,10 @@ checklists). iOS requires Xcode on the build machine (not yet exercised).
 ## Decision record
 | Field | Value |
 |---|---|
-| Decision (GO / NO-GO) | _fill in_ |
-| Decided by | _fill in_ |
-| Date | _fill in_ |
-| Evidence (links to traces/recordings) | _fill in_ |
+| Decision (GO / NO-GO) | **GO — proceed with Phaser** (Android validated). ⚠️ iOS native-audio survival is UNVERIFIED (no Xcode on build machine) and MUST be confirmed before any iOS release. |
+| Decided by | User direction (2026-06-09) |
+| Date | 2026-06-09 |
+| Evidence (links to traces/recordings) | Android C6 (Android 13): app builds/installs/launches; Phaser 4.1 scene renders; drag works; native-audio voice prompt plays after the `public/` assetPath fix (see Build & integration findings). Web build verified in Chrome + iPhone Safari preview. iOS native build NOT exercised (Command Line Tools only; full Xcode required). |
 
 ## PIVOT trigger (documented fallback)
 If the gate is **NO-GO on iOS audio OR on Android drag/battery**, pivot the stack to
