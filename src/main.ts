@@ -37,3 +37,18 @@ async function boot(): Promise<void> {
 }
 
 void boot();
+
+// Service-worker update nudge. vite-plugin-pwa (registerType: 'autoUpdate') already reloads when a
+// new worker activates, but iOS home-screen apps only check on cold launch. Re-checking on launch
+// and whenever the app is brought back to the foreground makes new deploys apply a launch sooner.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready
+    .then((reg) => {
+      const check = (): void => { void reg.update().catch(() => {}); };
+      check();
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    })
+    .catch(() => {
+      // No active service worker (e.g. dev server) — nothing to update.
+    });
+}
