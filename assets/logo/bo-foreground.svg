@@ -4,8 +4,9 @@
       <stop offset="0" stop-color="#f7ab4d"/><stop offset="1" stop-color="#ef8f2e"/>
     </linearGradient>
   </defs>
-  <!-- Bo only, transparent, scaled into the Android adaptive-icon safe zone (~60%). -->
-  <g transform="translate(256,256) scale(0.62) translate(-256,-268)">
+  <!-- Bo sized to the adaptive-icon safe zone: ~60% of the canvas, so it's prominent but never
+       clipped by a launcher's circle/squircle mask. (@capacitor/assets keeps this layout as-is.) -->
+  <g transform="translate(256,256) scale(0.9) translate(-256,-268)">
     <circle cx="170" cy="158" r="50" fill="url(#fur)" stroke="#d97a1f" stroke-width="9"/>
     <circle cx="342" cy="158" r="50" fill="url(#fur)" stroke="#d97a1f" stroke-width="9"/>
     <circle cx="170" cy="158" r="24" fill="#ffdcb4"/>
