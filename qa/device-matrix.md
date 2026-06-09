@@ -6,7 +6,7 @@ may begin until this file records a GO decision.** (Spec §9 Phase 0; §10 resol
 ## Scope of Phase 0 (the gate)
 Prove, on the team's CURRENT devices, that the two dealbreaker-class risks are survivable:
 1. **iOS WKWebView WebAudio defect** — a critical voice prompt must SURVIVE a call interruption and a
-   lock/unlock cycle (routed via `@capacitor-community/native-audio`, assetPath `assets/audio/<id>.m4a`;
+   lock/unlock cycle (routed via `@capacitor-community/native-audio`, assetPath `public/assets/audio/<id>.m4a`;
    AudioContext resumed on Capacitor App `resume` + document `visibilitychange`).
 2. **Android drag latency + battery** — drag must feel responsive and battery drain acceptable.
 
@@ -18,11 +18,48 @@ mitigated by default via atlasing / WebGL / idle-throttling (idle throttle built
 | Role | Model | OS version | Owner | Date tested |
 |---|---|---|---|---|
 | iPad (current) | _fill in_ | _fill in_ | _fill in_ | _fill in_ |
-| Android (current) | _fill in_ | _fill in_ | _fill in_ | _fill in_ |
+| Android (current) | C6 | Android 13 | _fill in_ | 2026-06-09 (build/deploy verified; gate tests pending) |
 
 ## Test procedure
 - iOS: follow `qa/checklists/phase0-ios-audio.md` (Tests A call-interruption, B lock/unlock, C bg/fg).
 - Android: follow `qa/checklists/phase0-android-drag.md` (Tests A drag latency, B battery, C idle).
+
+## Build & integration findings (2026-06-09)
+
+The Android debug build was produced and deployed to a connected device. These integration findings
+were discovered and resolved during deployment; they correct/extend the plan's assumptions and MUST be
+carried forward.
+
+**Build environment — JDK 21 is REQUIRED.** Capacitor 8.3's Android library compiles to Java release 21;
+building with JDK 17 fails (`error: invalid source release: 21`). Installed `openjdk@21` (Homebrew) and
+built with `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`. Add JDK 21 to the
+build-machine prerequisites. Working command:
+`JAVA_HOME=<jdk21> ANDROID_HOME=~/Library/Android/sdk ./android/gradlew -p android :app:installDebug`.
+
+**Finding 1 — native-audio assetPath needs a `public/` prefix on Android (CORRECTS prior LAW).** The
+reconciliation declared the convention as `assets/audio/<id>.m4a` (NO public/ prefix). On-device this
+FAILED: `@capacitor-community/native-audio` v7 opens `assetPath` via AssetManager relative to the assets
+root, where Capacitor places web assets under `public/`. `preload` rejected (`Error:
+assets/audio/spike-prompt-sort.m4a`) and — being awaited before the tap listener attached — aborted
+bootstrap → blank screen. FIX (committed): `NativeAudioBackend.preload` uses `public/${cue.src}.m4a`.
+**Resolved assetPath = `public/assets/audio/<id>.m4a`.** Contracts §2.3/§3.2 and M1 Task 10 must adopt
+this. (Phaser/WebAudio still loads via the web root as `assets/audio/<id>`.)
+
+**Finding 2 — the PWA service worker serves stale assets in the native shell.** `vite-plugin-pwa`
+(generateSW) precaches the bundle; inside the Capacitor WebView the SW served the OLD bundle after a
+rebuild, masking the fix until app data was cleared. In a native app the SW is REDUNDANT (Capacitor
+serves bundled assets offline) and causes stale-content traps. ACTION (M1): disable the workbox SW for
+the NATIVE build; keep `vite-plugin-pwa` only for the web/PWA deliverable. Dev workaround until then:
+`adb shell pm clear com.telaeris.ehaangames` (or uninstall/reinstall) after each rebuild.
+
+**Finding 3 — spike bootstrap hardened.** Wrapped `registerCues` in try/catch so a single preload
+failure can no longer abort init / blank the screen. M1's AudioService should likewise treat preload
+failures non-fatally.
+
+**Status:** Android app BUILDS, INSTALLS, LAUNCHES, and RENDERS the spike scene on the device
+(Phaser 4.1.0, WebGL); native-audio preload succeeds after Finding 1. The subjective gate tests (drag
+latency, 15-min battery) and ALL iOS audio-interruption tests remain for the human (see the per-platform
+checklists). iOS requires Xcode on the build machine (not yet exercised).
 
 ## Recorded results
 ### iOS — `phase0-ios-audio.md`
@@ -31,7 +68,7 @@ mitigated by default via atlasing / WebGL / idle-throttling (idle throttle built
 | A — call interruption x3 | _fill in_ | _fill in_ |
 | B — lock/unlock x3 | _fill in_ | _fill in_ |
 | C — background/foreground | _fill in_ | _fill in_ |
-| Native-audio assetPath used | _fill in_ | (record the resolved `assetPath`; default `assets/audio/<id>.m4a`, NO public/ prefix) |
+| Native-audio assetPath used | `public/assets/audio/<id>.m4a` | REQUIRED on Android (Finding 1); plugin opens via AssetManager relative to assets root. Confirm the same resolves on iOS. |
 
 ### Android — `phase0-android-drag.md`
 | Test | Result (PASS/FAIL) | Notes (fps, lag, battery start→end, thermal) |
@@ -71,7 +108,7 @@ designated runner-up in the spec's stack matrix (§3.2) and keeps the SAME TypeS
   incl. the manual→suspended transition) and `src/shell/input/dropValidation.ts` — they have no Phaser
   dependency and port directly.
 - The canonical `AudioBackend` interface and the VALIDATED native-audio + AudioContext-resume APPROACH
-  and its learnings (assetPath `assets/audio/<id>.m4a`, resume triggers, unlock-on-first-gesture),
+  and its learnings (assetPath `public/assets/audio/<id>.m4a`, resume triggers, unlock-on-first-gesture),
   re-expressed against RN/Expo native-audio + AppState.
 - The compliance assertion `hasNoServerUrl` and its test (stack-agnostic).
 - These device-matrix results and the checklists (`phase0-ios-audio.md`, `phase0-android-drag.md`),
