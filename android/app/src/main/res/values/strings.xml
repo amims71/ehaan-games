@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ehaan Games</string>
+    <string name="title_activity_main">Ehaan Games</string>
+    <string name="package_name">com.telaeris.ehaangames</string>
+    <string name="custom_url_scheme">com.telaeris.ehaangames</string>
+</resources>
