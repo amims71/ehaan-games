@@ -29,7 +29,7 @@ const w = (file: string, text?: string): Word => ({ file, text: text ?? file });
 
 // Letters say their NAME, not their sound (phonetic spelling forces correct pronunciation).
 const LETTERS: Record<string, string> = {
-  a: 'ay', b: 'bee', c: 'see', d: 'dee', e: 'ee', f: 'eff', g: 'jee', h: 'aitch', i: 'eye',
+  a: 'ay', b: 'bee', c: 'see', d: 'dee', e: 'ee', f: 'eff', g: 'gee', h: 'aitch', i: 'eye',
   j: 'jay', k: 'kay', l: 'ell', m: 'em', n: 'en', o: 'oh', p: 'pee', q: 'cue', r: 'arr',
   s: 'ess', t: 'tee', u: 'you', v: 'vee', w: 'double you', x: 'ex', y: 'why', z: 'zee',
 };
@@ -57,6 +57,26 @@ const GROUPS: { name: string; words: Word[] }[] = [
   { name: 'letters', words: Object.entries(LETTERS).map(([file, text]) => w(file, text)) },
   { name: 'extra', words: [w('big'), w('small'), w('great-job', 'Great job!')] },
 ];
+
+async function synth(voice: string, key: string, tmp: string, file: string, text: string): Promise<void> {
+  const res = await fetch(`${TTS}/${voice}?output_format=mp3_44100_128`, {
+    method: 'POST',
+    headers: { 'xi-api-key': key, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
+    body: JSON.stringify({
+      text, model_id: MODEL,
+      voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0, use_speaker_boost: true },
+    }),
+  });
+  if (!res.ok) throw new Error(`TTS ${res.status}: ${await res.text()}`);
+  mkdirSync(OUT_DIR, { recursive: true });
+  const mp3 = join(tmp, `${file}.mp3`);
+  writeFileSync(mp3, Buffer.from(await res.arrayBuffer()));
+  const out = join(OUT_DIR, `${file}.m4a`);
+  const trim = 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05';
+  execFileSync('ffmpeg', ['-y', '-i', mp3,
+    '-af', `${trim},areverse,${trim},areverse,loudnorm=I=-16:TP=-1.5:LRA=11`,
+    '-ar', '44100', '-c:a', 'aac', '-b:a', '96k', out], { stdio: 'ignore' });
+}
 
 function arg(name: string): string | undefined {
   return process.argv.slice(2).find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=');
@@ -89,6 +109,18 @@ async function main(): Promise<void> {
   }
 
   const voice = arg('voice') ?? DEFAULT_VOICE;
+  const tmp = mkdtempSync(join(tmpdir(), 'voice-'));
+
+  // Ad-hoc single clip for tuning a tricky word:  --file=<name> --text="..."
+  const adhocFile = arg('file');
+  const adhocText = arg('text');
+  if (adhocFile && adhocText) {
+    process.stdout.write(`  ${adhocFile} "${adhocText}" ... `);
+    await synth(voice, key, tmp, adhocFile, adhocText);
+    console.log('ok');
+    return;
+  }
+
   const groupName = arg('group');
   const limit = Number(arg('limit') ?? 0);
   const group = GROUPS.find((g) => g.name === groupName);
@@ -96,31 +128,14 @@ async function main(): Promise<void> {
     console.error(`Pass --group=<${GROUPS.map((g) => g.name).join('|')}>  (and optionally --limit=N, --voice=<id>)`);
     process.exit(1);
   }
-  const words = limit > 0 ? group.words.slice(0, limit) : group.words;
+  const only = arg('only')?.split(',').map((s) => s.trim()).filter(Boolean);
+  let words = limit > 0 ? group.words.slice(0, limit) : group.words;
+  if (only) words = words.filter((x) => only.includes(x.file));
 
-  mkdirSync(OUT_DIR, { recursive: true });
-  const tmp = mkdtempSync(join(tmpdir(), 'voice-'));
   console.log(`group '${group.name}' — ${words.length} word(s), voice ${voice}, model ${MODEL}`);
-
   for (const { file, text } of words) {
     process.stdout.write(`  ${file.padEnd(14)} "${text}" ... `);
-    const res = await fetch(`${TTS}/${voice}?output_format=mp3_44100_128`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-      body: JSON.stringify({
-        text,
-        model_id: MODEL,
-        voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0, use_speaker_boost: true },
-      }),
-    });
-    if (!res.ok) { console.error(`FAILED (${res.status}): ${await res.text()}`); process.exit(1); }
-    const mp3 = join(tmp, `${file}.mp3`);
-    writeFileSync(mp3, Buffer.from(await res.arrayBuffer()));
-    const out = join(OUT_DIR, `${file}.m4a`);
-    const trim = 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05';
-    execFileSync('ffmpeg', ['-y', '-i', mp3,
-      '-af', `${trim},areverse,${trim},areverse,loudnorm=I=-16:TP=-1.5:LRA=11`,
-      '-ar', '44100', '-c:a', 'aac', '-b:a', '96k', out], { stdio: 'ignore' });
+    await synth(voice, key, tmp, file, text);
     console.log('ok');
   }
   console.log(`\nDone: group '${group.name}' (${words.length}). Rebuild + redeploy to ship.`);
