@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { FONT, ACCENT, TEXT_DARK } from '@/shell/ui/theme';
-import { speakAfterCurrent } from '@/shell/audio/feedback';
+import { speakAfterCurrent, fanfare } from '@/shell/audio/feedback';
 
 // Abstract base for all mini-game scenes. Subclasses call super('SceneKey') and implement
 // buildLayout() to populate the board. Everything else (Back button, celebrate, drag wiring)
@@ -33,6 +33,11 @@ export abstract class BaseGameScene extends Phaser.Scene {
     this._addChrome();
     this.builtW = this.scale.width;
     this.builtH = this.scale.height;
+  }
+
+  /** Start a fresh round: clears the scene and re-runs buildLayout + chrome. */
+  protected rebuild(): void {
+    this.doBuild();
   }
 
   private scheduleRebuild(): void {
@@ -117,6 +122,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setScale(0);
     this.tweens.add({ targets: banner, scale: 1, duration: 480, ease: 'Back.out' });
+    fanfare();
     speakAfterCurrent('Great job!');
 
     const pool = confettiPool ?? ['🎉', '⭐', '✨', '💛', '🎈'];

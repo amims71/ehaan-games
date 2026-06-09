@@ -83,8 +83,14 @@ export function chime(): void {
   tone(880, 0.1, 0.18, 0.18);
 }
 
-/** Soft, gentle "try again" tone — deliberately NOT a harsh buzzer (kinder for ages 2-5). */
+/** Gentle "try again" tone. Mid frequencies so it's audible on small speakers, but soft (not harsh). */
 export function buzz(): void {
-  tone(300, 0, 0.16, 0.13);
-  tone(220, 0.12, 0.2, 0.13);
+  tone(392, 0, 0.14, 0.2);
+  tone(294, 0.13, 0.2, 0.2);
+}
+
+/** Happy ascending arpeggio (C-E-G-C) for celebrations. */
+export function fanfare(): void {
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((f, i) => tone(f, i * 0.1, 0.24, 0.16));
 }
