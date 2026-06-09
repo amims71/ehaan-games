@@ -30,7 +30,7 @@ const w = (file: string, text?: string): Word => ({ file, text: text ?? file });
 // Letters say their NAME, not their sound (phonetic spelling forces correct pronunciation).
 const LETTERS: Record<string, string> = {
   a: 'ay', b: 'bee', c: 'see', d: 'dee', e: 'ee', f: 'eff', g: 'gee', h: 'aitch', i: 'eye',
-  j: 'jay', k: 'kay', l: 'ell', m: 'em', n: 'en', o: 'oh', p: 'pee', q: 'cue', r: 'arr',
+  j: 'jay', k: 'kay', l: 'ell', m: 'emm', n: 'en', o: 'oh', p: 'pee', q: 'cue', r: 'arr',
   s: 'ess', t: 'tee', u: 'you', v: 'vee', w: 'double you', x: 'ex', y: 'why', z: 'zee',
 };
 const NUMBERS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
