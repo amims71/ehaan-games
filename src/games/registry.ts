@@ -23,4 +23,5 @@ export const GAMES: GameEntry[] = [
   { id: 'animal-sound',  sceneKey: 'AnimalSound', title: 'Animal Sounds', icon: '🐮' },
   { id: 'counting',      sceneKey: 'Counting',    title: 'Counting',     icon: '🔢' },
   { id: 'patterns',      sceneKey: 'Patterns',    title: 'Patterns',     icon: '🔁' },
+  { id: 'first-letter',  sceneKey: 'FirstLetter', title: 'First Letter', icon: '🔤' },
 ];
