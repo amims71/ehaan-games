@@ -21,4 +21,5 @@ export const GAMES: GameEntry[] = [
   { id: 'find-color',    sceneKey: 'FindColor',   title: 'Find Colour',   icon: '🌈' },
   { id: 'find-shape',    sceneKey: 'FindShape',   title: 'Find Shape',    icon: '⬜' },
   { id: 'animal-sound',  sceneKey: 'AnimalSound', title: 'Animal Sounds', icon: '🐮' },
+  { id: 'counting',      sceneKey: 'Counting',    title: 'Counting',     icon: '🔢' },
 ];

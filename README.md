@@ -64,6 +64,10 @@ npx cap run android     # or: npx cap run ios  (requires Xcode)
 
 > Requires **JDK 21** for the Android build (Capacitor 8).
 
+## License
+
+[MIT](LICENSE)
+
 ---
 
 *Prototype — not yet released.*
