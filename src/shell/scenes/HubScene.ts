@@ -82,7 +82,10 @@ export class HubScene extends Phaser.Scene {
     this.rowStep = tileH + gap;
     const contentH = rows * tileH + (rows - 1) * gap;
     const viewportH = H - this.listTop - H * 0.04;
-    this.maxScroll = Math.max(0, contentH - viewportH);
+    const rawMax = Math.max(0, contentH - viewportH);
+    // Round the max scroll UP to a whole row so EVERY rest position (including the bottom) is
+    // row-aligned — the top of the list then never shows a half-cut row.
+    this.maxScroll = rawMax > 0 ? Math.ceil(rawMax / this.rowStep) * this.rowStep : 0;
 
     // Opaque header strip (depth 9) so tiles scroll out of sight behind the fixed title (depth 10).
     this.add.rectangle(W / 2, this.listTop / 2, W, this.listTop, BG_NUM).setDepth(9);
