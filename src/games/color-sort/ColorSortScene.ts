@@ -8,6 +8,7 @@ import {
 import { drawBasket } from '@/shell/ui/theme';
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
+import { fitGrid, rowX } from '@/shell/ui/layout';
 
 // Color-sort game. Each round randomly picks a few colours (from a vivid, mutually-distinguishable
 // pool) and a DISTINCT redundant emoji cue per colour, so the board varies every round but stays
@@ -81,29 +82,27 @@ export class ColorSortScene extends BaseGameScene {
     const icons = this.shuffle([...ICON_POOL]).slice(0, ROUND_COLORS);
     const cats: RoundCat[] = colors.map((c, i) => ({ ...c, icon: icons[i] }));
 
+    // Bins: a centred row across the bottom, sized to the viewport.
     const n = cats.length;
-    const binW = Math.min(230, (W * 0.94) / n - 18);
-    const binH = binW * 0.92;
-    const binGap = (W - n * binW) / (n + 1);
-    const binY = H * 0.74;
-    cats.forEach((cat, i) => {
-      const x = binGap + binW / 2 + i * (binW + binGap);
-      this.drawBin(x, binY, binW, binH, cat);
-    });
+    const gap = W * 0.03;
+    const binH = Math.min(W * 0.3, H * 0.26);
+    const binW = Math.min(240, (W - (n + 1) * gap) / n);
+    const binY = H - binH / 2 - H * 0.05;
+    const xs = rowX(n, 0, W, binW, gap);
+    cats.forEach((cat, i) => this.drawBin(xs[i], binY, binW, binH, cat));
 
+    // Items: a grid filling the area between the title and the bins (adapts to orientation).
     const deck: RoundCat[] = [];
     cats.forEach((c) => {
       for (let k = 0; k < ITEMS_PER_CATEGORY; k++) deck.push(c);
     });
     const shuffled = this.shuffle(deck);
-    const count = shuffled.length;
-    const size = Math.min(108, (W * 0.92) / count - 14);
-    const trayGap = (W - count * size) / (count + 1);
-    const trayY = H * 0.36;
-    shuffled.forEach((cat, i) => {
-      const x = trayGap + size / 2 + i * (size + trayGap);
-      this.makeItem(x, trayY, size, cat, `i${i}`);
-    });
+    const areaTop = H * 0.17;
+    const areaH = binY - binH / 2 - H * 0.03 - areaTop;
+    const grid = fitGrid(shuffled.length, W * 0.05, areaTop, W * 0.9, areaH, 0.24, 120);
+    shuffled.forEach((cat, i) =>
+      this.makeItem(grid.cells[i].x, grid.cells[i].y, grid.size, cat, `i${i}`),
+    );
   }
 
   private drawBin(x: number, y: number, w: number, h: number, cat: RoundCat): void {

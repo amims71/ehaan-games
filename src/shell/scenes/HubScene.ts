@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { FONT, BG_NUM } from '@/shell/ui/theme';
 import { GAMES } from '@/games/registry';
+import { fitGrid } from '@/shell/ui/layout';
 
 // Hub — the main menu. Shows a big title and one tappable card per game.
 // Works portrait and landscape; card size is computed from the viewport.
@@ -10,15 +11,34 @@ export class HubScene extends Phaser.Scene {
     super('Hub');
   }
 
+  private rebuildTimer?: Phaser.Time.TimerEvent;
+  private builtW = 0;
+  private builtH = 0;
+
   create(): void {
+    this.buildLayout();
+    this.scale.on('resize', this.scheduleRebuild, this);
+    this.events.once('shutdown', () => this.scale.off('resize', this.scheduleRebuild, this));
+  }
+
+  private scheduleRebuild(): void {
+    if (this.scale.width === this.builtW && this.scale.height === this.builtH) return;
+    this.rebuildTimer?.remove();
+    this.rebuildTimer = this.time.delayedCall(120, () => this.buildLayout());
+  }
+
+  private buildLayout(): void {
+    this.tweens.killAll();
+    this.children.removeAll(true);
+    this.builtW = this.scale.width;
+    this.builtH = this.scale.height;
+
     const W = this.scale.width;
     const H = this.scale.height;
     const min = Math.min(W, H);
 
-    // Background (matches Phaser backgroundColor, but also drawn to cover any gap).
     this.add.rectangle(W / 2, H / 2, W, H, BG_NUM);
 
-    // Title.
     this.add
       .text(W / 2, H * 0.1, 'Ehaan Games', {
         fontFamily: FONT,
@@ -28,27 +48,11 @@ export class HubScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Responsive card layout.
-    const n     = GAMES.length;
-    const isLandscape = W > H;
-    const cardW = isLandscape
-      ? Math.min(200, (W * 0.88) / n - 20)
-      : Math.min(260, W * 0.72);
-    const cardH = cardW * 1.18;
-    const r     = 32;
-
-    // In landscape: single row. In portrait: single column.
-    const startY = isLandscape ? H * 0.52 : H * 0.3;
-    const stepY  = isLandscape ? 0           : cardH + Math.max(20, H * 0.04);
-    const stepX  = isLandscape ? cardW + Math.max(20, W * 0.04) : 0;
-    const originX = isLandscape
-      ? W / 2 - ((n - 1) / 2) * stepX
-      : W / 2;
-
+    // Square cards laid out in a grid that fits any orientation (row in landscape, column in portrait).
+    const grid = fitGrid(GAMES.length, W * 0.06, H * 0.2, W * 0.88, H * 0.72, 0.2, 260);
     GAMES.forEach((game, idx) => {
-      const cx = originX + idx * stepX;
-      const cy = startY  + idx * stepY;
-      this.makeCard(cx, cy, cardW, cardH, r, game.icon, game.title, game.sceneKey);
+      const cell = grid.cells[idx];
+      this.makeCard(cell.x, cell.y, grid.size, grid.size, 32, game.icon, game.title, game.sceneKey);
     });
   }
 

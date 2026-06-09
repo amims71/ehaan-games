@@ -9,6 +9,7 @@ import { FONT, PALETTE, drawBasket } from '@/shell/ui/theme';
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { nameFor } from '@/shell/ui/emojiNames';
+import { fitGrid, rowX } from '@/shell/ui/layout';
 
 // Sort items into category baskets (Fruit / Animal / Vehicle).
 // Uses redundant emoji cues — no colour-only distinction.
@@ -72,19 +73,16 @@ export class ItemSortScene extends BaseGameScene {
 
     this.addTitle('Sort the items!');
 
-    // Draw category baskets along the bottom third.
+    // Category baskets: a centred row across the bottom.
     const n = CATEGORY_DEFS.length;
-    const binW = Math.min(220, (W * 0.94) / n - 18);
-    const binH = binW * 1.0;
-    const binGap = (W - n * binW) / (n + 1);
-    const binY = H * 0.75;
+    const gap = W * 0.03;
+    const binH = Math.min(W * 0.3, H * 0.27);
+    const binW = Math.min(230, (W - (n + 1) * gap) / n);
+    const binY = H - binH / 2 - H * 0.06;
+    const xs = rowX(n, 0, W, binW, gap);
+    CATEGORY_DEFS.forEach((cat, i) => this.drawBin(xs[i], binY, binW, binH, cat));
 
-    CATEGORY_DEFS.forEach((cat, i) => {
-      const x = binGap + binW / 2 + i * (binW + binGap);
-      this.drawBin(x, binY, binW, binH, cat);
-    });
-
-    // Build a shuffled deck of 2 items per category.
+    // Shuffled deck of random items from each category's large pool.
     const deck: { emoji: string; categoryId: string }[] = [];
     CATEGORY_DEFS.forEach((cat) => {
       const picked = this.shuffle([...cat.items]).slice(0, ITEMS_PER_CATEGORY);
@@ -92,15 +90,13 @@ export class ItemSortScene extends BaseGameScene {
     });
     const shuffled = this.shuffle(deck);
 
-    const count = shuffled.length;
-    const size  = Math.min(110, (W * 0.92) / count - 14);
-    const trayGap = (W - count * size) / (count + 1);
-    const trayY = H * 0.36;
-
-    shuffled.forEach(({ emoji, categoryId }, i) => {
-      const x = trayGap + size / 2 + i * (size + trayGap);
-      this.makeItem(x, trayY, size, emoji, categoryId, `i${i}`);
-    });
+    // Items grid fills the area between the title and the baskets (adapts to orientation).
+    const areaTop = H * 0.17;
+    const areaH = binY - binH / 2 - H * 0.03 - areaTop;
+    const grid = fitGrid(shuffled.length, W * 0.05, areaTop, W * 0.9, areaH, 0.24, 116);
+    shuffled.forEach(({ emoji, categoryId }, i) =>
+      this.makeItem(grid.cells[i].x, grid.cells[i].y, grid.size, emoji, categoryId, `i${i}`),
+    );
   }
 
   private drawBin(x: number, y: number, w: number, h: number, cat: CategoryDef): void {

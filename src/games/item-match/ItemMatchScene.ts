@@ -7,6 +7,7 @@ import {
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { nameFor } from '@/shell/ui/emojiNames';
+import { fitGrid } from '@/shell/ui/layout';
 
 // Find-the-pair matching game. All 6 cards are face-up (appropriate for ages 2-5).
 // Tap one card to select it, tap another — if they share pairId they lock; else both wiggle.
@@ -16,7 +17,8 @@ const MATCH_POOL: string[] = [
   '🐱', '⭐', '🌞', '🐶', '🍎', '🚗', '🐸', '🌈', '🦋', '🐢',
   '🐠', '🌸', '🍓', '🐙', '🦄', '🍦', '🎈', '🐧', '🐝', '🌻',
 ];
-const PAIRS_PER_ROUND = 3;
+const MIN_PAIRS = 4;
+const MAX_PAIRS = 5;
 
 interface Card {
   container: Phaser.GameObjects.Container;
@@ -46,8 +48,9 @@ export class ItemMatchScene extends BaseGameScene {
 
     this.addTitle('Find the match!');
 
-    // Pick a fresh set of pairs each round, then build 2 cards per pair and shuffle positions.
-    const chosen = this.shuffle([...MATCH_POOL]).slice(0, PAIRS_PER_ROUND);
+    // Pick 4-5 pairs this round; build 2 cards per pair and shuffle positions.
+    const pairCount = MIN_PAIRS + Math.floor(Math.random() * (MAX_PAIRS - MIN_PAIRS + 1));
+    const chosen = this.shuffle([...MATCH_POOL]).slice(0, pairCount);
     const deck: Array<{ pairId: string; emoji: string; id: string }> = [];
     chosen.forEach((emoji, p) => {
       const pairId = `p${p}`;
@@ -56,21 +59,11 @@ export class ItemMatchScene extends BaseGameScene {
     });
     const shuffled = this.shuffle(deck);
 
-    // 2-column × 3-row grid, centred.
-    const cols = 3;
-    const rows = 2;
-    const size = Math.min(140, Math.min(W / (cols + 1), H * 0.32));
-    const hGap = (W - cols * size) / (cols + 1);
-    const vGap = (H * 0.68 - rows * size) / (rows + 1);
-    const gridTop = H * 0.2;
-
-    shuffled.forEach((entry, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x   = hGap + size / 2 + col * (size + hGap);
-      const y   = gridTop + vGap + size / 2 + row * (size + vGap);
-      this.makeCard(x, y, size, entry.emoji, entry.id, entry.pairId);
-    });
+    // Responsive grid that fits all cards below the title in any orientation.
+    const grid = fitGrid(shuffled.length, W * 0.05, H * 0.17, W * 0.9, H * 0.76, 0.2, 150);
+    shuffled.forEach((entry, i) =>
+      this.makeCard(grid.cells[i].x, grid.cells[i].y, grid.size, entry.emoji, entry.id, entry.pairId),
+    );
   }
 
   private makeCard(

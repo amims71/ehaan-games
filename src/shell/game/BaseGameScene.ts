@@ -8,16 +8,37 @@ import { speak } from '@/shell/audio/feedback';
 
 export abstract class BaseGameScene extends Phaser.Scene {
 
-  // Subclasses must implement this — called on create() and after each celebrate().
+  // Subclasses must implement this — called on create(), after each celebrate(), and on resize.
   protected abstract buildLayout(): void;
+
+  private rebuildTimer?: Phaser.Time.TimerEvent;
+  private builtW = 0;
+  private builtH = 0;
 
   create(): void {
     this.input.on('dragstart', this.onDragStart, this);
     this.input.on('drag',      this.onDrag,      this);
     this.input.on('drop',      this.onDrop,      this);
     this.input.on('dragend',   this.onDragEnd,   this);
+    this.doBuild();
+    // Reflow on orientation / window-size change (scenes are laid out from the live canvas size).
+    this.scale.on('resize', this.scheduleRebuild, this);
+    this.events.once('shutdown', () => this.scale.off('resize', this.scheduleRebuild, this));
+  }
+
+  private doBuild(): void {
+    this.tweens.killAll();
+    this.children.removeAll(true);
     this.buildLayout();
     this._addChrome();
+    this.builtW = this.scale.width;
+    this.builtH = this.scale.height;
+  }
+
+  private scheduleRebuild(): void {
+    if (this.scale.width === this.builtW && this.scale.height === this.builtH) return;
+    this.rebuildTimer?.remove();
+    this.rebuildTimer = this.time.delayedCall(120, () => this.doBuild());
   }
 
   // ── shared chrome ────────────────────────────────────────────────────────
@@ -62,14 +83,17 @@ export abstract class BaseGameScene extends Phaser.Scene {
     btn.on('pointerout',   () => btnBg.setAlpha(1));
   }
 
-  /** Shared title text — called by subclasses from buildLayout(). */
+  /** Shared title text — called by subclasses from buildLayout(). Sits clear of the Back pill. */
   protected addTitle(text: string): void {
     const W = this.scale.width;
     const H = this.scale.height;
+    // In portrait the wide title would collide with the top-left Back pill, so drop it below it;
+    // in landscape it stays near the top centre (clear of the left-aligned Back pill).
+    const y = H >= W ? Math.min(W, H) * 0.18 : H * 0.1;
     this.add
-      .text(W / 2, H * 0.09, text, {
+      .text(W / 2, y, text, {
         fontFamily: FONT,
-        fontSize: `${Math.round(Math.min(W, H) * 0.072)}px`,
+        fontSize: `${Math.round(Math.min(W, H) * 0.07)}px`,
         color: TEXT_DARK,
         fontStyle: '600',
       })
@@ -112,12 +136,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
       });
     }
 
-    this.time.delayedCall(2300, () => {
-      this.tweens.killAll();
-      this.children.removeAll(true);
-      this.buildLayout();
-      this._addChrome();
-    });
+    this.time.delayedCall(2300, () => this.doBuild());
   }
 
   // ── drag hooks — subclasses override to handle game logic ───────────────
