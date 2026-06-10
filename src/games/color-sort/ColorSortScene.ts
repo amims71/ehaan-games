@@ -9,6 +9,7 @@ import { drawBasket, COLORS, darken, type NamedColor } from '@/shell/ui/theme';
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { fitGrid, rowX } from '@/shell/ui/layout';
+import { count } from '@/shell/settings';
 
 // Color-sort game. Each round randomly picks 3 of the 11 named colours from the shared palette.
 // Items show the vivid colour with a darkened border (so white/yellow remain visible on cream bg).
@@ -51,7 +52,7 @@ export class ColorSortScene extends BaseGameScene {
     this.addTitle('Match the colors!');
 
     // Pick 3 of the 11 named colours for this round.
-    const cats: NamedColor[] = this.shuffle([...COLORS]).slice(0, ROUND_COLORS);
+    const cats: NamedColor[] = this.shuffle([...COLORS]).slice(0, count(ROUND_COLORS, 2));
 
     // Bins: a centred row across the bottom, sized to the viewport.
     const n = cats.length;

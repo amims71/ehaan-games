@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { FONT, BG_NUM } from '@/shell/ui/theme';
 import { GAMES } from '@/games/registry';
-import { isMuted, toggleMuted } from '@/shell/settings';
+import { isMuted, toggleMuted, isYounger, toggleYounger } from '@/shell/settings';
 import { chime } from '@/shell/audio/feedback';
 
 // Hub — the main menu: a fixed title over a vertically SCROLLABLE grid of game tiles, so the
@@ -87,6 +87,30 @@ export class HubScene extends Phaser.Scene {
       ticon.setText(muted ? '🔇' : '🔊');
       this.tweens.add({ targets: toggle, scale: 0.9, duration: 80, yoyo: true });
       if (!muted) chime(); // little confirmation when turning sound back on
+    });
+
+    // "Younger" mode toggle (stacked below the speaker, clear of the centred title) — fewer items
+    // per round. Filled when on.
+    const yToggle = this.add.container(W - sz / 2 - 16, sz / 2 + 16 + sz + 10).setDepth(11);
+    const ybg = this.add.graphics();
+    const drawYbg = (on: boolean): void => {
+      ybg.clear();
+      ybg.fillStyle(on ? 0xe8590c : 0xfedcc8, 1);
+      ybg.fillCircle(0, 0, sz / 2);
+      ybg.lineStyle(3, 0xe8590c, 1);
+      ybg.strokeCircle(0, 0, sz / 2);
+    };
+    drawYbg(isYounger());
+    const yicon = this.add
+      .text(0, 0, '🍼', { fontSize: `${Math.round(sz * 0.46)}px`, padding: { top: pad, bottom: pad } })
+      .setOrigin(0.5);
+    yToggle.add([ybg, yicon]);
+    yToggle.setSize(sz, sz);
+    yToggle.setInteractive({ useHandCursor: true });
+    yToggle.on('pointerdown', () => {
+      const on = toggleYounger();
+      drawYbg(on);
+      this.tweens.add({ targets: yToggle, scale: 0.9, duration: 80, yoyo: true });
     });
 
     this.listTop = H * 0.2;

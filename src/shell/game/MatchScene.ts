@@ -3,6 +3,7 @@ import { isMatch, isSetComplete, type DraggableMeta } from '@/shell/input/dropVa
 import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { fitGrid } from '@/shell/ui/layout';
+import { isYounger } from '@/shell/settings';
 
 // Shared base for pair-matching games. Subclasses supply tokens, face drawing, and pronunciation.
 // The board builds 2 cards per token, shuffles positions, and handles all tap/match/celebrate logic.
@@ -68,7 +69,8 @@ export abstract class MatchScene extends BaseGameScene {
 
     this.addTitle(this.roundTitle());
 
-    const tokens = this.pickRound();
+    const all = this.pickRound();
+    const tokens = isYounger() ? all.slice(0, 3) : all; // fewer pairs for the youngest
     const deck: Array<{ pairId: string; token: MatchToken; id: string; cardIndex: number }> = [];
     tokens.forEach((token, p) => {
       const pairId = `p${p}`;

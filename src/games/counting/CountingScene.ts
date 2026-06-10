@@ -2,6 +2,7 @@ import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { FONT, TEXT_DARK, glyphText } from '@/shell/ui/theme';
 import { fitGrid, rowX } from '@/shell/ui/layout';
+import { count } from '@/shell/settings';
 
 const OBJECTS = ['🍎', '🐶', '⭐', '🚗', '🐱', '🌸', '🐝', '🎈', '🍓', '🦋'];
 const MAX_COUNT = 5;
@@ -23,8 +24,9 @@ export class CountingScene extends BaseGameScene {
 
     this.addTitle('Count them!');
 
-    // Pick a random count and random emoji object for this round.
-    const n = 1 + Math.floor(Math.random() * MAX_COUNT);
+    // Pick a random count and random emoji object for this round (lower max in younger mode).
+    const maxCount = count(MAX_COUNT, 3);
+    const n = 1 + Math.floor(Math.random() * maxCount);
     const emoji = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
 
     // ── Count area ────────────────────────────────────────────────────────────
@@ -48,12 +50,12 @@ export class CountingScene extends BaseGameScene {
     }
 
     // ── Number candidate row ──────────────────────────────────────────────────
-    // Five cards (1–5) shuffled, centred in the bottom strip.
-    const nums = this.shuffle([1, 2, 3, 4, 5]);
-    const cardSize = Math.round(Math.min(min * 0.17, (W * 0.82) / 5));
+    // Cards 1..maxCount shuffled, centred in the bottom strip.
+    const nums = this.shuffle(Array.from({ length: maxCount }, (_, i) => i + 1));
+    const cardSize = Math.round(Math.min(min * 0.17, (W * 0.82) / nums.length));
     const cardGap = Math.round(cardSize * 0.18);
     const rowY = H * 0.86;
-    const xs = rowX(5, 0, W, cardSize, cardGap);
+    const xs = rowX(nums.length, 0, W, cardSize, cardGap);
     const r = 18;
 
     nums.forEach((num, idx) => {

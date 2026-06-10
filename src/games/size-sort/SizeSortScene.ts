@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SortScene, type SortBin, type SortItem } from '@/shell/game/SortScene';
 import { FONT, PALETTE, glyphText } from '@/shell/ui/theme';
+import { count } from '@/shell/settings';
 
 // Sort game: drag items to the 'Big' or 'Small' basket based on the rendered emoji size.
 // Each round shows a few icons AS PAIRS — the same icon once big and once small — so the child
@@ -38,7 +39,7 @@ export class SizeSortScene extends SortScene {
 
     // Each chosen icon becomes a pair: one 'big' item and one 'small' item, so the same picture
     // is shown at both sizes for direct comparison.
-    const emojis = this.shuffle([...EMOJI_POOL]).slice(0, PAIRS);
+    const emojis = this.shuffle([...EMOJI_POOL]).slice(0, count(PAIRS, 2));
     const items: SortItem[] = [];
     emojis.forEach((emoji, i) => {
       (['big', 'small'] as SizeCategory[]).forEach((cat) => {

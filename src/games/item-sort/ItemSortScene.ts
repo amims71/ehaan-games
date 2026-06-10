@@ -10,6 +10,7 @@ import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { nameFor } from '@/shell/ui/emojiNames';
 import { fitGrid, rowX } from '@/shell/ui/layout';
+import { count } from '@/shell/settings';
 
 // Sort items into category baskets (Fruit / Animal / Vehicle).
 // Uses redundant emoji cues — no colour-only distinction.
@@ -85,7 +86,7 @@ export class ItemSortScene extends BaseGameScene {
     // Shuffled deck of random items from each category's large pool.
     const deck: { emoji: string; categoryId: string }[] = [];
     CATEGORY_DEFS.forEach((cat) => {
-      const picked = this.shuffle([...cat.items]).slice(0, ITEMS_PER_CATEGORY);
+      const picked = this.shuffle([...cat.items]).slice(0, count(ITEMS_PER_CATEGORY, 1));
       picked.forEach((emoji) => deck.push({ emoji, categoryId: cat.id }));
     });
     const shuffled = this.shuffle(deck);
@@ -188,7 +189,7 @@ export class ItemSortScene extends BaseGameScene {
       speak(nameFor(item.emoji));
       const idx = bin.count;
       bin.count += 1;
-      const tx = bin.x + (idx - (ITEMS_PER_CATEGORY - 1) / 2) * 28;
+      const tx = bin.x + (idx - (count(ITEMS_PER_CATEGORY, 1) - 1) / 2) * 28;
       this.tweens.add({
         targets: obj,
         x: tx,

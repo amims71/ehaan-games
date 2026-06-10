@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SortScene, type SortBin, type SortItem } from '@/shell/game/SortScene';
 import { SHAPES, type ShapeId, drawShape } from '@/shell/ui/shapes';
+import { count } from '@/shell/settings';
 
 // Sort game: drag shapes into drop targets that display the shape itself as a large silhouette.
 // Each round picks 3 random shapes; items share the shape but may differ in colour.
@@ -29,8 +30,8 @@ export class ShapeSortScene extends SortScene {
   }
 
   protected buildRound(): { bins: SortBin[]; items: SortItem[] } {
-    // Pick 3 random distinct shapes.
-    const picked: ShapeId[] = this.shuffle([...SHAPES]).slice(0, 3);
+    // Pick the round's distinct shapes (fewer in younger mode).
+    const picked: ShapeId[] = this.shuffle([...SHAPES]).slice(0, count(3, 2));
 
     const bins: SortBin[] = picked.map((shape, i) => {
       const pal = BIN_PALETTES[i % BIN_PALETTES.length];

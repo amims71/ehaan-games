@@ -3,6 +3,7 @@ import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { FONT, TEXT_DARK, ACCENT, glyphText } from '@/shell/ui/theme';
 import { fitGrid } from '@/shell/ui/layout';
+import { count } from '@/shell/settings';
 
 // Abstract "find the matching token" game. Shows ~8 candidates; player taps the one that
 // matches the target — shown visually (visual mode) or announced via audio (audio mode).
@@ -70,7 +71,8 @@ export abstract class FindScene extends BaseGameScene {
 
     this.addTitle(this.roundTitle());
 
-    const candidates  = this.pickCandidates().slice(0, CANDIDATE_COUNT);
+    const n           = count(CANDIDATE_COUNT, 4); // younger mode shows fewer options
+    const candidates  = this.pickCandidates().slice(0, n);
     const target      = candidates[Math.floor(Math.random() * candidates.length)];
     this.roundTarget  = target;
 
@@ -83,7 +85,7 @@ export abstract class FindScene extends BaseGameScene {
     const areaTop    = (H >= W ? min * 0.22 : H * 0.18);
     const areaBottom = promptY - promptSize / 2 - min * 0.05;
     const grid = fitGrid(
-      CANDIDATE_COUNT,
+      n,
       W * 0.06,
       areaTop,
       W * 0.88,
