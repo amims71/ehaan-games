@@ -13,6 +13,7 @@ const TEX = 'bubble-ball';
 export class BubblePopScene extends BaseGameScene {
   private playTop = 0;
   private diameter = 80;
+  private bubbles!: Phaser.Physics.Arcade.Group;
 
   constructor() {
     super('BubblePop');
@@ -45,6 +46,11 @@ export class BubblePopScene extends BaseGameScene {
     g.generateTexture(TEX, d, d);
     g.destroy();
 
+    // Group + self-collider so bubbles bump off each other instead of overlapping — every tap then
+    // pops exactly the bubble you touched.
+    this.bubbles = this.physics.add.group();
+    this.physics.add.collider(this.bubbles, this.bubbles);
+
     const n = count(7, 4);
     for (let i = 0; i < n; i++) this.spawn(true);
   }
@@ -61,6 +67,7 @@ export class BubblePopScene extends BaseGameScene {
     const y = anywhere ? Phaser.Math.Between(this.playTop + d, H - d) : H - d / 2;
 
     const b = this.physics.add.image(x, y, TEX).setTint(cat.color);
+    this.bubbles.add(b);
     const body = b.body as Phaser.Physics.Arcade.Body;
     body.setCircle(d / 2);
     body.setCollideWorldBounds(true);
