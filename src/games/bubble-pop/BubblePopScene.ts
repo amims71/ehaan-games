@@ -14,12 +14,19 @@ export class BubblePopScene extends BaseGameScene {
   private playTop = 0;
   private diameter = 80;
   private bubbles!: Phaser.Physics.Arcade.Group;
+  private collider?: Phaser.Physics.Arcade.Collider;
 
   constructor() {
     super('BubblePop');
   }
 
   protected buildLayout(): void {
+    // Tear down the prior physics state before recreating it — the group and collider live in the
+    // Arcade world, not the display list, so doBuild()'s children.removeAll(true) does NOT reclaim
+    // them. Without this, each resize-driven rebuild orphans a group and stacks a live self-collider.
+    this.collider?.destroy();
+    this.bubbles?.destroy(true);
+
     const W = this.scale.width;
     const H = this.scale.height;
     const min = Math.min(W, H);
@@ -49,7 +56,7 @@ export class BubblePopScene extends BaseGameScene {
     // Group + self-collider so bubbles bump off each other instead of overlapping — every tap then
     // pops exactly the bubble you touched.
     this.bubbles = this.physics.add.group();
-    this.physics.add.collider(this.bubbles, this.bubbles);
+    this.collider = this.physics.add.collider(this.bubbles, this.bubbles);
 
     const n = count(7, 4);
     for (let i = 0; i < n; i++) this.spawn(true);

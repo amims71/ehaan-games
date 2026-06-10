@@ -52,8 +52,12 @@ export class CountingScene extends BaseGameScene {
     // ── Number candidate row ──────────────────────────────────────────────────
     // Cards 1..maxCount shuffled, centred in the bottom strip.
     const nums = this.shuffle(Array.from({ length: maxCount }, (_, i) => i + 1));
-    const cardSize = Math.round(Math.min(min * 0.17, (W * 0.82) / nums.length));
-    const cardGap = Math.round(cardSize * 0.18);
+    // Gap-inclusive fit so the row actually stays within the 0.82·W budget (mirrors FirstLetter/Patterns).
+    const gapRatio = 0.18;
+    const cardSize = Math.round(
+      Math.min(min * 0.17, (W * 0.82) / (nums.length + (nums.length - 1) * gapRatio)),
+    );
+    const cardGap = Math.round(cardSize * gapRatio);
     const rowY = H * 0.86;
     const xs = rowX(nums.length, 0, W, cardSize, cardGap);
     const r = 18;
@@ -103,6 +107,7 @@ export class CountingScene extends BaseGameScene {
 
       this.pop(card);
       this.time.delayedCall(120, () => {
+        if (!card.active) return; // a resize may have rebuilt the scene in this window
         const badgeSize = card.width;
         const badge = this.add
           .text(0, 0, '✓', {

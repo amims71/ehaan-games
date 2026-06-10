@@ -92,13 +92,16 @@ export abstract class BaseGameScene extends Phaser.Scene {
   protected addTitle(text: string): void {
     const W = this.scale.width;
     const H = this.scale.height;
-    // In portrait the wide title would collide with the top-left Back pill, so drop it below it;
-    // in landscape it stays near the top centre (clear of the left-aligned Back pill).
-    const y = H >= W ? Math.min(W, H) * 0.18 : H * 0.1;
+    // In portrait the wide title would collide with the top-left Back pill, so anchor it just below
+    // the pill's measured bottom (so a long title never clips it on the narrowest phones); in
+    // landscape it stays near the top centre (clear of the left-aligned Back pill).
+    const min = Math.min(W, H);
+    const btnH = Math.round(min * 0.1); // mirrors _addChrome's Back-pill height
+    const y = H >= W ? (btnH + 16) + min * 0.07 : H * 0.1;
     this.add
       .text(W / 2, y, text, {
         fontFamily: FONT,
-        fontSize: `${Math.round(Math.min(W, H) * 0.07)}px`,
+        fontSize: `${Math.round(min * 0.07)}px`,
         color: TEXT_DARK,
         fontStyle: '600',
       })

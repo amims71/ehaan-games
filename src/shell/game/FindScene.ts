@@ -3,7 +3,7 @@ import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { FONT, TEXT_DARK, ACCENT, glyphText } from '@/shell/ui/theme';
 import { fitGrid } from '@/shell/ui/layout';
-import { count } from '@/shell/settings';
+import { count, isMuted } from '@/shell/settings';
 
 // Abstract "find the matching token" game. Shows ~8 candidates; player taps the one that
 // matches the target — shown visually (visual mode) or announced via audio (audio mode).
@@ -125,7 +125,10 @@ export abstract class FindScene extends BaseGameScene {
   // ── prompt zone ───────────────────────────────────────────────────────────
 
   private buildPrompt(target: FindToken, promptY: number, size: number, W: number): void {
-    if (this.promptMode === 'visual') {
+    // Audio-prompt games (Listen & Find, Animal Sounds) have no visual cue for the target — the
+    // only hint is spoken. When sound is off, speak() is a no-op, so fall back to a visual target
+    // (the token's face) so the game stays playable muted, exactly like the visual-mode finds.
+    if (this.promptMode === 'visual' || isMuted()) {
       this.buildVisualPrompt(target, promptY, size, W);
     } else {
       this.buildAudioPrompt(promptY, size, W);
@@ -233,6 +236,7 @@ export abstract class FindScene extends BaseGameScene {
 
       this.pop(card);
       this.time.delayedCall(120, () => {
+        if (!card.active) return; // a resize may have rebuilt the scene in this window
         const size = card.width;
         const badge = this.add
           .text(0, 0, '✓', {

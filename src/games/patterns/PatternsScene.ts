@@ -3,6 +3,7 @@ import { BaseGameScene } from '@/shell/game/BaseGameScene';
 import { chime, buzz, speak } from '@/shell/audio/feedback';
 import { FONT, ACCENT, glyphText } from '@/shell/ui/theme';
 import { rowX } from '@/shell/ui/layout';
+import { count, isYounger } from '@/shell/settings';
 
 // "What comes next?" — show a simple repeating pattern of coloured tokens with the last slot
 // blank, and let the child tap the token that continues the pattern. Uses coloured circles so the
@@ -27,8 +28,7 @@ const UNITS: number[][] = [
   [0, 1, 2],    // ABC ABC ...
 ];
 
-const VISIBLE = 5;        // tokens shown before the blank slot
-const CANDIDATES = 3;     // answer cards offered
+const CANDIDATES = 3;     // answer cards offered (visible-sequence length is per-mode, see buildLayout)
 
 export class PatternsScene extends BaseGameScene {
   private correctCount = 0;
@@ -49,16 +49,21 @@ export class PatternsScene extends BaseGameScene {
 
     this.addTitle('What comes next?');
 
+    // Shorter sequence + simplest unit templates (AB, AAB only) for the youngest. Read fresh each
+    // build so toggling 🍼 then re-entering takes effect.
+    const visible = count(5, 3); // tokens shown before the blank slot
+    const unitPool = isYounger() ? UNITS.slice(0, 2) : UNITS;
+
     // ── Build the pattern ──────────────────────────────────────────────────────
-    const unit = UNITS[Math.floor(Math.random() * UNITS.length)];
+    const unit = unitPool[Math.floor(Math.random() * unitPool.length)];
     const distinct = Math.max(...unit) + 1;
     const tokens = this.shuffle([...POOL]);
     const items = tokens.slice(0, distinct);                 // A, B, (C)
 
-    // Full sequence of length VISIBLE+1; the final entry is the answer.
+    // Full sequence of length visible+1; the final entry is the answer.
     const full: Token[] = [];
-    for (let i = 0; i <= VISIBLE; i++) full.push(items[unit[i % unit.length]]);
-    const answer = full[VISIBLE];
+    for (let i = 0; i <= visible; i++) full.push(items[unit[i % unit.length]]);
+    const answer = full[visible];
 
     // Candidate set: the distinct tokens in the pattern, padded with distractors to CANDIDATES.
     const candidates = [...items];
@@ -68,7 +73,7 @@ export class PatternsScene extends BaseGameScene {
 
     // ── Sequence row (5 tokens + 1 blank "?" slot) ──────────────────────────────
     // cellW solves  n·cellW + (n-1)·gapRatio·cellW = availW  so the whole row fits on screen.
-    const seqCount = VISIBLE + 1;
+    const seqCount = visible + 1;
     const gapRatio = 0.22;
     const availW = W * 0.9;
     const cellW = Math.round(
@@ -79,10 +84,10 @@ export class PatternsScene extends BaseGameScene {
     const xs = rowX(seqCount, 0, W, cellW, cellGap);
     this.qGlyphSize = Math.round(cellW * 0.86);
 
-    for (let i = 0; i < VISIBLE; i++) {
+    for (let i = 0; i < visible; i++) {
       glyphText(this, xs[i], seqY, full[i].emoji, this.qGlyphSize);
     }
-    this.qSlot = this.makeBlankSlot(xs[VISIBLE], seqY, cellW);
+    this.qSlot = this.makeBlankSlot(xs[visible], seqY, cellW);
 
     // ── Candidate cards ─────────────────────────────────────────────────────────
     const cardSize = Math.round(Math.min(min * 0.22, (W * 0.74) / CANDIDATES));
@@ -177,6 +182,7 @@ export class PatternsScene extends BaseGameScene {
       }
 
       this.time.delayedCall(120, () => {
+        if (!card.active) return; // a resize may have rebuilt the scene in this window
         const badge = this.add
           .text(0, 0, '✓', {
             fontFamily: FONT,
