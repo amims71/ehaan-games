@@ -19,6 +19,11 @@ export class FindShapeScene extends FindScene {
     return 'Find the shape!';
   }
 
+  // Shapes are self-contained art — no white square card behind them.
+  protected override hasCardBg(): boolean {
+    return false;
+  }
+
   protected pickCandidates(): FindToken[] {
     const shapes = this.shuffle([...SHAPES]).slice(0, 8) as ShapeId[];
     this.shapeColors = new Map(
@@ -33,7 +38,12 @@ export class FindShapeScene extends FindScene {
     token: FindToken,
   ): void {
     const color = this.shapeColors.get(token.key) ?? SHAPE_FILL_COLORS[0];
-    drawShape(this, parent, token.key as ShapeId, size * 0.7, color);
+    // No card behind it — a soft offset shadow gives the shape depth (matches Shape Sort).
+    const shadow = this.add.container(0, 6);
+    drawShape(this, shadow, token.key as ShapeId, size * 0.82, 0x000000);
+    shadow.setAlpha(0.12);
+    parent.add(shadow);
+    drawShape(this, parent, token.key as ShapeId, size * 0.82, color);
   }
 
   protected pronounce(token: FindToken): string {

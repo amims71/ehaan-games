@@ -12,7 +12,7 @@ export interface FindToken {
   key: string;
 }
 
-const CANDIDATE_COUNT = 8;
+const CANDIDATE_COUNT = 6; // fewer options = easier for the youngest players
 
 export abstract class FindScene extends BaseGameScene {
   protected readonly promptMode: 'visual' | 'audio';
@@ -50,6 +50,11 @@ export abstract class FindScene extends BaseGameScene {
     return this.pronounce(token);
   }
 
+  /** Whether faces sit on a white square card. Override to false for self-contained art (shapes). */
+  protected hasCardBg(): boolean {
+    return true;
+  }
+
   // ── build ─────────────────────────────────────────────────────────────────
 
   protected buildLayout(): void {
@@ -65,20 +70,22 @@ export abstract class FindScene extends BaseGameScene {
     const target      = candidates[Math.floor(Math.random() * candidates.length)];
     this.roundTarget  = target;
 
-    const promptY    = H >= W ? min * 0.30 : H * 0.27;
-    const promptSize = min * 0.2;
-
+    // Big "what to find" showcase at the BOTTOM (easy for a child to glance at), options above it.
+    const promptSize = min * 0.3;
+    const promptY    = H - promptSize / 2 - H * 0.05;
     this.buildPrompt(target, promptY, promptSize, W);
 
-    const gridTop = promptY + promptSize * 0.6;
+    // Candidate grid fills the space between the title and the bottom showcase — bigger tiles.
+    const areaTop    = (H >= W ? min * 0.22 : H * 0.18);
+    const areaBottom = promptY - promptSize / 2 - min * 0.05;
     const grid = fitGrid(
       CANDIDATE_COUNT,
-      W * 0.05,
-      gridTop,
-      W * 0.9,
-      H * 0.94 - gridTop,
+      W * 0.06,
+      areaTop,
+      W * 0.88,
+      areaBottom - areaTop,
       0.2,
-      150,
+      200,
     );
 
     const shuffledCandidates = this.shuffle(candidates);
@@ -102,16 +109,18 @@ export abstract class FindScene extends BaseGameScene {
     const r = 24;
     const x = W / 2;
 
-    const shadow = this.add.graphics();
-    shadow.fillStyle(0x000000, 0.12);
-    shadow.fillRoundedRect(x - size / 2, promptY - size / 2 + 7, size, size, r);
+    if (this.hasCardBg()) {
+      const shadow = this.add.graphics();
+      shadow.fillStyle(0x000000, 0.12);
+      shadow.fillRoundedRect(x - size / 2, promptY - size / 2 + 7, size, size, r);
 
-    const bg = this.add.graphics();
-    bg.fillStyle(0xffffff, 1);
-    bg.fillRoundedRect(x - size / 2, promptY - size / 2, size, size, r);
-    // Accent border signals "this is what to find".
-    bg.lineStyle(6, Phaser.Display.Color.HexStringToColor(ACCENT).color, 1);
-    bg.strokeRoundedRect(x - size / 2, promptY - size / 2, size, size, r);
+      const bg = this.add.graphics();
+      bg.fillStyle(0xffffff, 1);
+      bg.fillRoundedRect(x - size / 2, promptY - size / 2, size, size, r);
+      // Accent border signals "this is what to find".
+      bg.lineStyle(6, Phaser.Display.Color.HexStringToColor(ACCENT).color, 1);
+      bg.strokeRoundedRect(x - size / 2, promptY - size / 2, size, size, r);
+    }
 
     // Draw the token's face into a container centred at (x, promptY).
     const faceContainer = this.add.container(x, promptY);
@@ -156,17 +165,19 @@ export abstract class FindScene extends BaseGameScene {
     const r = 24;
     const c = this.add.container(x, y);
 
-    const shadow = this.add.graphics();
-    shadow.fillStyle(0x000000, 0.12);
-    shadow.fillRoundedRect(-size / 2, -size / 2 + 7, size, size, r);
+    if (this.hasCardBg()) {
+      const shadow = this.add.graphics();
+      shadow.fillStyle(0x000000, 0.12);
+      shadow.fillRoundedRect(-size / 2, -size / 2 + 7, size, size, r);
 
-    const bg = this.add.graphics();
-    bg.fillStyle(0xffffff, 1);
-    bg.fillRoundedRect(-size / 2, -size / 2, size, size, r);
-    bg.lineStyle(5, 0xffd6b0, 0.9);
-    bg.strokeRoundedRect(-size / 2, -size / 2, size, size, r);
+      const bg = this.add.graphics();
+      bg.fillStyle(0xffffff, 1);
+      bg.fillRoundedRect(-size / 2, -size / 2, size, size, r);
+      bg.lineStyle(5, 0xffd6b0, 0.9);
+      bg.strokeRoundedRect(-size / 2, -size / 2, size, size, r);
 
-    c.add([shadow, bg]);
+      c.add([shadow, bg]);
+    }
     this.drawFace(c, size, token);
     c.setSize(size, size);
     c.setInteractive({ useHandCursor: true });
