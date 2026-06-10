@@ -35,8 +35,9 @@ function regular(sides: number, r: number, rotDeg = -90): Array<[number, number]
   });
 }
 
-// Points for each shape, centred on (0,0), fitting within `size`.
-function shapePoints(shape: ShapeId, size: number): Array<[number, number]> {
+// Points for each shape, centred on (0,0), fitting within `size`. Exported so other renderers
+// (e.g. the Colour-It tracing game) can draw a shape silhouette to a canvas.
+export function shapePoints(shape: ShapeId, size: number): Array<[number, number]> {
   const r = size * 0.46;
   switch (shape) {
     case 'circle':
