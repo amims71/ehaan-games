@@ -18,6 +18,7 @@ import { PatternsScene }       from './games/patterns/PatternsScene';
 import { FirstLetterScene }    from './games/first-letter/FirstLetterScene';
 import { SimpleJigsawScene }   from './games/jigsaw/SimpleJigsawScene';
 import { ColourItScene }       from './games/colour-it/ColourItScene';
+import { BubblePopScene }      from './games/bubble-pop/BubblePopScene';
 
 // Wait for web fonts (if any) so text renders in the intended face, then boot Phaser.
 async function boot(): Promise<void> {
@@ -31,7 +32,8 @@ async function boot(): Promise<void> {
     parent: 'app',
     backgroundColor: '#fff7ed',
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [HubScene, ColorSortScene, ItemSortScene, ItemMatchScene, LetterMatchScene, FindLetterScene, ListenFindScene, ShapeSortScene, SizeSortScene, ShapeMatchScene, CaseMatchScene, FindColorScene, FindShapeScene, AnimalSoundScene, CountingScene, PatternsScene, FirstLetterScene, SimpleJigsawScene, ColourItScene],
+    physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 } } },
+    scene: [HubScene, ColorSortScene, ItemSortScene, ItemMatchScene, LetterMatchScene, FindLetterScene, ListenFindScene, ShapeSortScene, SizeSortScene, ShapeMatchScene, CaseMatchScene, FindColorScene, FindShapeScene, AnimalSoundScene, CountingScene, PatternsScene, FirstLetterScene, SimpleJigsawScene, ColourItScene, BubblePopScene],
   });
   // Dev-only: expose the game for quick scene navigation while iterating (stripped from production).
   if (import.meta.env.DEV) (globalThis as Record<string, unknown>).__game = game;
