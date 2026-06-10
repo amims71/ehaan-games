@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { FONT, BG_NUM } from '@/shell/ui/theme';
 import { GAMES } from '@/games/registry';
+import { isMuted, toggleMuted } from '@/shell/settings';
+import { chime } from '@/shell/audio/feedback';
 
 // Hub — the main menu: a fixed title over a vertically SCROLLABLE grid of game tiles, so the
 // catalogue can grow past one screen. Drag/swipe or wheel to scroll; a small drag threshold
@@ -64,6 +66,28 @@ export class HubScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(10);
+
+    // Sound on/off toggle (top-right) — global mute, persisted, affects every game.
+    const sz = Math.round(min * 0.12);
+    const toggle = this.add.container(W - sz / 2 - 16, sz / 2 + 16).setDepth(11);
+    const tbg = this.add.graphics();
+    tbg.fillStyle(0xfedcc8, 1);
+    tbg.fillCircle(0, 0, sz / 2);
+    tbg.lineStyle(3, 0xe8590c, 1);
+    tbg.strokeCircle(0, 0, sz / 2);
+    const pad = Math.round(sz * 0.13);
+    const ticon = this.add
+      .text(0, 0, isMuted() ? '🔇' : '🔊', { fontSize: `${Math.round(sz * 0.48)}px`, padding: { top: pad, bottom: pad } })
+      .setOrigin(0.5);
+    toggle.add([tbg, ticon]);
+    toggle.setSize(sz, sz);
+    toggle.setInteractive({ useHandCursor: true });
+    toggle.on('pointerdown', () => {
+      const muted = toggleMuted();
+      ticon.setText(muted ? '🔇' : '🔊');
+      this.tweens.add({ targets: toggle, scale: 0.9, duration: 80, yoyo: true });
+      if (!muted) chime(); // little confirmation when turning sound back on
+    });
 
     this.listTop = H * 0.2;
 

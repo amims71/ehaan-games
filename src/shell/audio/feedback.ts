@@ -4,6 +4,8 @@
 // and offline (no runtime TTS, which the spec forbids and which is unreliable across platforms).
 // M3 swaps the say-generated clips for the warm ElevenLabs narrator at the same paths.
 
+import { isMuted } from '@/shell/settings';
+
 type WindowWithWebkitAudio = Window & { webkitAudioContext?: typeof AudioContext };
 
 let ctx: AudioContext | undefined;
@@ -27,6 +29,7 @@ function slug(text: string): string {
 
 /** Play the pre-rendered clip for a word/phrase (e.g. a colour or item name). */
 export function speak(text: string): void {
+  if (isMuted()) return;
   const key = slug(text);
   if (!key) return;
   try {
@@ -62,6 +65,7 @@ export function speakAfterCurrent(text: string): void {
 }
 
 function tone(freq: number, startOffset: number, dur: number, gain: number): void {
+  if (isMuted()) return;
   const ac = audio();
   if (!ac) return;
   const t0 = ac.currentTime + startOffset;
