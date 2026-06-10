@@ -88,7 +88,7 @@ export class ColourItScene extends BaseGameScene {
     this.target = this.pickTarget();
     const brush = BRUSH_COLORS[Math.floor(Math.random() * BRUSH_COLORS.length)];
     this.brushCss = `#${brush.toString(16).padStart(6, '0')}`;
-    this.threshold = young ? 0.45 : 0.6;
+    this.threshold = young ? 0.82 : 0.92; // must colour (nearly) the whole glyph, not just part
     this.s = Math.round(min * (young ? 0.66 : 0.58));
     this.cx = W / 2;
     this.cy = H >= W ? min * 0.54 : H * 0.52;
@@ -210,15 +210,25 @@ export class ColourItScene extends BaseGameScene {
     ctx.globalCompositeOperation = 'source-over';
     this.paintTex.refresh();
 
+    // Mark every inside cell the brush actually covers (within its radius of the stroke), so the
+    // coverage count matches what's visibly painted.
+    const br = this.s * 0.07;
     const steps = Math.max(1, Math.ceil(Phaser.Math.Distance.Between(lx0, ly0, lx1, ly1) / (this.cell * 0.5)));
     for (let i = 0; i <= steps; i++) {
       const lx = Phaser.Math.Linear(lx0, lx1, i / steps);
       const ly = Phaser.Math.Linear(ly0, ly1, i / steps);
-      const c = Math.floor(lx / this.cell);
-      const r = Math.floor(ly / this.cell);
-      if (c < 0 || r < 0 || c >= GRID || r >= GRID) continue;
-      const idx = r * GRID + c;
-      if (this.inside.has(idx)) this.visited.add(idx);
+      const cMin = Math.floor((lx - br) / this.cell), cMax = Math.floor((lx + br) / this.cell);
+      const rMin = Math.floor((ly - br) / this.cell), rMax = Math.floor((ly + br) / this.cell);
+      for (let r = rMin; r <= rMax; r++) {
+        for (let c = cMin; c <= cMax; c++) {
+          if (c < 0 || r < 0 || c >= GRID || r >= GRID) continue;
+          const dx = (c + 0.5) * this.cell - lx;
+          const dy = (r + 0.5) * this.cell - ly;
+          if (dx * dx + dy * dy > br * br) continue;
+          const idx = r * GRID + c;
+          if (this.inside.has(idx)) this.visited.add(idx);
+        }
+      }
     }
 
     if (!this.locked && this.visited.size / this.insideCount >= this.threshold) this.complete();
