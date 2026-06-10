@@ -16,6 +16,7 @@ interface MatchCard {
   meta: DraggableMeta;
   token: MatchToken;
   matched: boolean;
+  home: { x: number; y: number };
 }
 
 export abstract class MatchScene extends BaseGameScene {
@@ -46,6 +47,13 @@ export abstract class MatchScene extends BaseGameScene {
   private selected: MatchCard | null = null;
   private locked  = false;
   private matched: string[]     = [];
+  // Scene-level pointer tracking drives BOTH tap and drag (same proven approach as the Hub scroll —
+  // reliable on touch, unlike Phaser's built-in draggable which broke tap and the drag-return).
+  private pressed: MatchCard | null = null;
+  private pressX = 0;
+  private pressY = 0;
+  private movedDist = 0;
+  private dragging = false;
 
   // ── buildLayout ──────────────────────────────────────────────────────────
 
@@ -105,9 +113,9 @@ export abstract class MatchScene extends BaseGameScene {
     this.drawFace(c, size, token, cardIndex);
 
     c.setSize(size, size);
-    c.setInteractive({ useHandCursor: true });
+    c.setInteractive({ useHandCursor: true }); // hover cursor only; tap + drag are scene-level
 
-    const card: MatchCard = { container: c, meta: { id, pairId }, token, matched: false };
+    const card: MatchCard = { container: c, meta: { id, pairId }, token, matched: false, home: { x, y } };
     c.setData('card', card);
     this.cards.push(card);
 
@@ -122,9 +130,8 @@ export abstract class MatchScene extends BaseGameScene {
       delay: Math.random() * 800,
     });
 
-    c.on('pointerdown', () => this.handleTap(card));
-    c.on('pointerover',  () => { if (!card.matched) c.setScale(1.06); });
-    c.on('pointerout',   () => { if (!card.matched) c.setScale(this.selected === card ? 1.14 : 1); });
+    c.on('pointerover', () => { if (!card.matched && !this.dragging && this.selected !== card) c.setScale(1.06); });
+    c.on('pointerout',  () => { if (!card.matched && !this.dragging) c.setScale(this.selected === card ? 1.14 : 1); });
   }
 
   // ── tap logic ────────────────────────────────────────────────────────────
@@ -214,5 +221,76 @@ export abstract class MatchScene extends BaseGameScene {
       });
       this.locked = false;
     });
+  }
+
+  // ── pointer-driven tap + drag (scene-level, installed once) ─────────────────
+
+  create(): void {
+    super.create();        // wires base hooks + builds the first layout
+    this.installPointer(); // scene-level handlers persist across rebuilds (cards are re-read live)
+  }
+
+  private installPointer(): void {
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.pressed   = this.locked ? null : this.hitCard(p.x, p.y, null);
+      this.pressX    = p.x;
+      this.pressY    = p.y;
+      this.movedDist = 0;
+      this.dragging  = false;
+    });
+
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      const card = this.pressed;
+      if (!card || !p.isDown) return;
+      this.movedDist = Math.max(this.movedDist, Phaser.Math.Distance.Between(this.pressX, this.pressY, p.x, p.y));
+      if (this.movedDist > 10) {
+        if (!this.dragging) this.beginDrag(card);
+        card.container.x = p.x;
+        card.container.y = p.y;
+      }
+    });
+
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      const card = this.pressed;
+      this.pressed = null;
+      if (!card) return;
+
+      if (this.dragging) {
+        this.dragging = false;
+        const target = this.locked ? null : this.hitCard(p.x, p.y, card);
+        if (target && isMatch(card.meta, target.meta)) {
+          this.lockPair(card, target); // both pop + vanish
+        } else {
+          if (target) buzz(); // dropped on a non-matching card
+          this.tweens.add({
+            targets: card.container, x: card.home.x, y: card.home.y, scale: 1, angle: 0,
+            duration: 260, ease: 'Back.out',
+          });
+        }
+      } else {
+        this.handleTap(card); // no real movement → a tap
+      }
+    });
+  }
+
+  /** Lift a card to begin dragging it (and cancel any pending tap-selection). */
+  private beginDrag(card: MatchCard): void {
+    this.dragging = true;
+    this.tweens.killTweensOf(card.container);
+    this.children.bringToTop(card.container);
+    this.tweens.add({ targets: card.container, scale: 1.12, duration: 100, ease: 'Back.out' });
+    if (this.selected && this.selected !== card) {
+      this.highlightCard(this.selected, false);
+      this.tweens.add({ targets: this.selected.container, scale: 1, duration: 100 });
+    }
+    this.selected = null;
+  }
+
+  /** Topmost unmatched, visible card whose bounds contain (x, y), excluding `exclude`. */
+  private hitCard(x: number, y: number, exclude: MatchCard | null): MatchCard | null {
+    return this.cards.find((k) =>
+      k !== exclude && !k.matched && k.container.visible
+      && Math.abs(x - k.container.x) <= k.container.width / 2
+      && Math.abs(y - k.container.y) <= k.container.height / 2) ?? null;
   }
 }
