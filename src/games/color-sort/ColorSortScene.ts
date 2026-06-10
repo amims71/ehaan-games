@@ -79,7 +79,8 @@ export class ColorSortScene extends BaseGameScene {
   private drawBin(x: number, y: number, w: number, h: number, cat: NamedColor): void {
     // Use darken() stroke so light colours (white/yellow) remain visible on the cream background.
     drawBasket(this, x, y, w, h, cat.tint, darken(cat.color), '');
-    const zone = this.add.zone(x, y, w, h).setRectangleDropZone(w, h);
+    // Forgiving drop zone — taller than the basket (extends upward), so a drop that lands short still counts.
+    const zone = this.add.zone(x, y - h * 0.4, w, h * 1.8).setRectangleDropZone(w, h * 1.8);
     this.bins.push({
       zone,
       target: { id: `bin-${cat.id}`, acceptsCategoryId: cat.id },

@@ -83,7 +83,12 @@ export abstract class SortScene extends BaseGameScene {
       const c = this.add.container(xs[i], binY);
       bin.drawInto(c, binW, binH);
       c.setSize(binW, binH);
-      const zone = this.add.zone(xs[i], binY, binW, binH).setRectangleDropZone(binW, binH);
+      // Forgiving drop zone — larger than the basket (mostly extending upward, where a toddler is
+      // likely to release short) so an imprecise drop still counts. Stays clear of the neighbour.
+      const zoneW = binW + gap * 0.8;
+      const zoneH = binH * 1.8;
+      const zoneY = binY - binH * 0.4;
+      const zone = this.add.zone(xs[i], zoneY, zoneW, zoneH).setRectangleDropZone(zoneW, zoneH);
       this.liveBins.push({
         zone,
         target: { id: `bin-${bin.categoryId}`, acceptsCategoryId: bin.categoryId },
