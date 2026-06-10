@@ -67,32 +67,26 @@ export class ShapeSortScene extends SortScene {
       categoryId: shape,
       pronounce: shape,
       drawInto: (c: Phaser.GameObjects.Container, size: number) => {
-        this.drawItemCard(c, shape, size, color);
+        this.drawItem(c, shape, size, color);
       },
     };
   }
 
   // ── drawing helpers ────────────────────────────────────────────────────────
 
-  private drawItemCard(
+  private drawItem(
     c: Phaser.GameObjects.Container,
     shape: ShapeId,
     size: number,
     color: number,
   ): void {
-    const r = 24;
+    // No square card behind it — the coloured shape itself is the draggable piece. A soft
+    // offset shadow gives it depth so it reads as a liftable sticker.
+    const shadow = this.add.container(0, 6);
+    drawShape(this, shadow, shape, size * 0.9, 0x000000);
+    shadow.setAlpha(0.12);
+    c.add(shadow);
 
-    const shadow = this.add.graphics();
-    shadow.fillStyle(0x000000, 0.12);
-    shadow.fillRoundedRect(-size / 2, -size / 2 + 7, size, size, r);
-
-    const card = this.add.graphics();
-    card.fillStyle(0xffffff, 1);
-    card.fillRoundedRect(-size / 2, -size / 2, size, size, r);
-    card.lineStyle(5, 0xffd6b0, 0.9);
-    card.strokeRoundedRect(-size / 2, -size / 2, size, size, r);
-
-    c.add([shadow, card]);
-    drawShape(this, c, shape, size * 0.6, color);
+    drawShape(this, c, shape, size * 0.9, color);
   }
 }
