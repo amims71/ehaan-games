@@ -21,6 +21,8 @@ export abstract class FindScene extends BaseGameScene {
 
   // Current round's target — held so drawFace can access it in buildVisualPrompt.
   private roundTarget!: FindToken;
+  private idleTimer?: Phaser.Time.TimerEvent;
+  private correctCard?: Phaser.GameObjects.Container; // the candidate matching the target
 
   constructor(sceneKey: string, promptMode: 'visual' | 'audio') {
     super(sceneKey);
@@ -59,6 +61,8 @@ export abstract class FindScene extends BaseGameScene {
 
   protected buildLayout(): void {
     this.inputLocked = false;
+    this.idleTimer?.remove();
+    this.correctCard = undefined;
 
     const W = this.scale.width;
     const H = this.scale.height;
@@ -92,6 +96,28 @@ export abstract class FindScene extends BaseGameScene {
     shuffledCandidates.forEach((token, i) =>
       this.makeCard(grid.cells[i].x, grid.cells[i].y, grid.size, token, target),
     );
+
+    this.scheduleIdleHint();
+  }
+
+  // ── idle help ──────────────────────────────────────────────────────────────
+
+  /** (Re)start the no-activity timer; a stuck child gets a nudge instead of frustration. */
+  private scheduleIdleHint(): void {
+    this.idleTimer?.remove();
+    this.idleTimer = this.time.delayedCall(6000, () => this.idleHint());
+  }
+
+  private idleHint(): void {
+    if (this.inputLocked) return;
+    speak(this.promptKey(this.roundTarget)); // re-say / re-play what to find
+    if (this.correctCard?.active) {
+      this.tweens.add({
+        targets: this.correctCard, scale: { from: 1, to: 1.18 },
+        duration: 320, yoyo: true, repeat: 1, ease: 'Sine.inOut',
+      });
+    }
+    this.scheduleIdleHint(); // keep nudging until they act
   }
 
   // ── prompt zone ───────────────────────────────────────────────────────────
@@ -179,6 +205,7 @@ export abstract class FindScene extends BaseGameScene {
       c.add([shadow, bg]);
     }
     this.drawFace(c, size, token);
+    if (token.key === target.key) this.correctCard = c; // remembered for the idle hint
     c.setSize(size, size);
     c.setInteractive({ useHandCursor: true });
 
@@ -195,6 +222,7 @@ export abstract class FindScene extends BaseGameScene {
     target: FindToken,
   ): void {
     if (this.inputLocked) return;
+    this.scheduleIdleHint(); // any interaction resets the idle clock
 
     if (token.key === target.key) {
       this.inputLocked = true;
