@@ -78,14 +78,47 @@ export abstract class BaseGameScene extends Phaser.Scene {
     const btn = this.add.container(btnX, btnY, [btnBg, btnLabel]);
     btn.setSize(btnW, btnH);
     btn.setInteractive({ useHandCursor: true });
+
+    // Hold-to-exit: a stray toddler tap shouldn't bail to the menu. Press and hold ~0.6s (a ring
+    // fills around the button) to go back; releasing early cancels.
+    const HOLD_MS = 600;
+    let holdTimer: Phaser.Time.TimerEvent | undefined;
+    let holdTween: Phaser.Tweens.Tween | undefined;
+    let ring: Phaser.GameObjects.Graphics | undefined;
+    let leaving = false;
+
+    const cancelHold = (): void => {
+      holdTimer?.remove(); holdTimer = undefined;
+      holdTween?.stop();   holdTween = undefined;
+      ring?.destroy();     ring = undefined;
+      if (!leaving) btn.setScale(1);
+    };
+
     btn.on('pointerdown', () => {
-      this.tweens.add({
-        targets: btn, scale: 0.9, duration: 80, yoyo: true,
-        onComplete: () => this.scene.start('Hub'),
+      if (leaving) return;
+      btn.setScale(0.94);
+      ring = this.add.graphics();
+      const proxy = { t: 0 };
+      const radius = btnW * 0.62;
+      holdTween = this.tweens.add({
+        targets: proxy, t: 1, duration: HOLD_MS, ease: 'Linear',
+        onUpdate: () => {
+          ring?.clear();
+          ring?.lineStyle(6, 0xe8590c, 1);
+          ring?.beginPath();
+          ring?.arc(btnX, btnY, radius, Phaser.Math.DegToRad(-90),
+            Phaser.Math.DegToRad(-90 + 360 * proxy.t), false);
+          ring?.strokePath();
+        },
+      });
+      holdTimer = this.time.delayedCall(HOLD_MS, () => {
+        leaving = true;
+        this.scene.start('Hub');
       });
     });
-    btn.on('pointerover',  () => btnBg.setAlpha(0.8));
-    btn.on('pointerout',   () => btnBg.setAlpha(1));
+    btn.on('pointerup',   cancelHold);
+    btn.on('pointerout',  () => { btnBg.setAlpha(1); cancelHold(); });
+    btn.on('pointerover', () => btnBg.setAlpha(0.8));
   }
 
   /** Shared title text — called by subclasses from buildLayout(). Sits clear of the Back pill. */
