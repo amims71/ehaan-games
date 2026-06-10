@@ -36,7 +36,6 @@ export class ColourItScene extends BaseGameScene {
   private brushCss = '#e23b3b';
   private target!: Target;
   private correctCount = 0;
-  private pointerInstalled = false;
   private cleanupHooked = false;
 
   constructor() {
@@ -45,10 +44,7 @@ export class ColourItScene extends BaseGameScene {
 
   create(): void {
     super.create();
-    if (!this.pointerInstalled) {
-      this.installPaint();
-      this.pointerInstalled = true;
-    }
+    this.installPaint(); // re-add every entry — Phaser clears scene input listeners on shutdown
   }
 
   private pickTarget(): Target {
