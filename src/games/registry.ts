@@ -27,4 +27,5 @@ export const GAMES: GameEntry[] = [
   { id: 'jigsaw',        sceneKey: 'SimpleJigsaw', title: 'Jigsaw',      icon: '🖼️' },
   { id: 'colour-it',     sceneKey: 'ColourIt',    title: 'Colour It',    icon: '🖍️' },
   { id: 'bubble-pop',    sceneKey: 'BubblePop',   title: 'Bubble Pop',   icon: '🫧' },
+  { id: 'catch-it',      sceneKey: 'CatchIt',     title: 'Catch It',     icon: '🧺' },
 ];
